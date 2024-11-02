@@ -9,6 +9,8 @@ contract AssoTransHTS is HederaTokenService {
 
     address tokenAddress;
 
+    string public testState ="state";
+
     constructor(address _tokenAddress) public {
         tokenAddress = _tokenAddress;
      }
