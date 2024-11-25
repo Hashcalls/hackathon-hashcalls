@@ -18,7 +18,8 @@ async function contractExecuteFcn(walletData, accountId, contractId) {
 	const contractExecSign = await contractExecTx.signWithSigner(signer);
 	const contractExecSubmit = await contractExecSign.executeWithSigner(signer);
 	const contractExecRx = await provider.getTransactionReceipt(contractExecSubmit.transactionId);
-	console.log(`- Token transfer from Operator to contract: ${contractExecRx.status.toString()}`);
+	console.log(`- State update: ${contractExecRx.status.toString()}`);
+
 
 
 	return contractExecSubmit.transactionId;

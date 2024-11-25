@@ -5,6 +5,7 @@ import tokenCreateFcn from "./components/hedera/tokenCreate.js";
 import tokenMintFcn from "./components/hedera/tokenMint.js";
 import contractDeployFcn from "./components/hedera/contractDeploy.js";
 import contractExecuteFcn from "./components/hedera/contractExecute.js";
+import contractQueryFcn from "./components/hedera/contractQuery.js";
 import "./styles/App.css";
 
 function App() {
@@ -93,6 +94,12 @@ function App() {
 			setTransferLinkSt(`https://hashscan.io/#/testnet/transaction/${txId}`);
 	}
 
+	async function contractQuery(){
+		const txIdRaw = await contractQueryFcn(walletData, accountId, contractId);
+		const txId = prettify(txIdRaw);
+		setTransferLinkSt(`https://hashscan.io/#/testnet/transaction/${txId}`);
+	}
+
 	function prettify(txIdRaw) {
 		const a = txIdRaw.split("@");
 		const b = a[1].split(".");
@@ -133,6 +140,13 @@ function App() {
 			<MyGroup
 				fcn={contractExecute}
 				buttonLabel={"Change Greeting"}
+				text={trasnferTextSt}
+				link={trasnferLinkSt}
+			/>
+
+			<MyGroup
+				fcn={contractQuery}
+				buttonLabel={"Query Greeting"}
 				text={trasnferTextSt}
 				link={trasnferLinkSt}
 			/>
