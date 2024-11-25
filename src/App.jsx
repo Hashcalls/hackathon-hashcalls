@@ -75,29 +75,22 @@ function App() {
 	}
 
 	async function contractDeploy() {
-		if (tokenId === undefined) {
-			setContractTextSt("🛑 Create a token first! 🛑");
-		} else if (contractId !== undefined) {
-			setContractTextSt(`You already have contract ${contractId} ✅`);
-		} else {
-			const [cId, txIdRaw] = await contractDeployFcn(walletData, accountId, tokenId);
+
+			const [cId, txIdRaw] = await contractDeployFcn(walletData, accountId);
 			setContractId(cId);
 			setContractTextSt(`Successfully deployed smart contract with ID: ${cId} ✅`);
 			setTransferTextSt();
 			const txId = prettify(txIdRaw);
 			setContractLinkSt(`https://hashscan.io/#/testnet/transaction/${txId}`);
-		}
+		
 	}
 
 	async function contractExecute() {
-		if (tokenId === undefined || contractId === undefined) {
-			setTransferTextSt("🛑 Create a token AND deploy a contract first! 🛑");
-		} else {
-			const txIdRaw = await contractExecuteFcn(walletData, accountId, tokenId, contractId);
+
+			const txIdRaw = await contractExecuteFcn(walletData, accountId, contractId);
 			setTransferTextSt(`🎉🎉🎉 Great job! You completed the demo 🎉🎉🎉`);
 			const txId = prettify(txIdRaw);
 			setTransferLinkSt(`https://hashscan.io/#/testnet/transaction/${txId}`);
-		}
 	}
 
 	function prettify(txIdRaw) {
@@ -116,7 +109,7 @@ function App() {
 				link={connectLinkSt}
 			/>
 
-			<MyGroup
+			{/* <MyGroup
 				fcn={tokenCreate}
 				buttonLabel={"Create New Token"}
 				text={createTextSt}
@@ -128,7 +121,7 @@ function App() {
 				buttonLabel={"Mint 100 New Tokens"}
 				text={mintTextSt}
 				link={mintLinkSt}
-			/>
+			/> */}
 
 			<MyGroup
 				fcn={contractDeploy}
@@ -139,7 +132,7 @@ function App() {
 
 			<MyGroup
 				fcn={contractExecute}
-				buttonLabel={"Transfer Tokens"}
+				buttonLabel={"Change Greeting"}
 				text={trasnferTextSt}
 				link={trasnferLinkSt}
 			/>
