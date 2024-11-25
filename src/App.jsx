@@ -1,26 +1,14 @@
 import React, { useState } from "react";
 import MyGroup from "./components/MyGroup.jsx";
 import walletConnectFcn from "./components/hedera/walletConnect.js";
+import { sendHbarFcn } from "./components/hedera/hbarTransfer.js";
 import "./styles/App.css";
 
 function App() {
 	const [walletData, setWalletData] = useState();
 	const [accountId, setAccountId] = useState();
-	const [tokenId, setTokenId] = useState();
-	const [tokenSupply, setTokenSupply] = useState();
-	const [contractId, setContractId] = useState();
-
 	const [connectTextSt, setConnectTextSt] = useState("🔌 Connect here...");
-	const [createTextSt, setCreateTextSt] = useState("");
-	const [mintTextSt, setMintTextSt] = useState("");
-	const [contractTextSt, setContractTextSt] = useState();
-	const [trasnferTextSt, setTransferTextSt] = useState();
-
 	const [connectLinkSt, setConnectLinkSt] = useState("");
-	const [createLinkSt, setCreateLinkSt] = useState("");
-	const [mintLinkSt, setMintLinkSt] = useState("");
-	const [contractLinkSt, setContractLinkSt] = useState();
-	const [trasnferLinkSt, setTransferLinkSt] = useState();
 
 	async function connectWallet() {
 		if (accountId !== undefined) {
@@ -36,9 +24,15 @@ function App() {
 				});
 			});
 			setWalletData(wData);
-			setCreateTextSt();
 		}
 	}
+
+	async function sendHbar() {
+		const senderAccountId = accountId;
+		const txStatus = await sendHbarFcn(walletData, senderAccountId);
+		console.log(`- Transaction status: ${txStatus}`);
+	}
+
 
 
 	function prettify(txIdRaw) {
@@ -55,6 +49,13 @@ function App() {
 				buttonLabel={"Connect Wallet"}
 				text={connectTextSt}
 				link={connectLinkSt}
+			/>
+
+			<MyGroup
+				fcn={sendHbar}
+				buttonLabel={"Send HBAR"}
+				text={"🚀 Send 1 HBAR to 0.0.5169915"
+				}
 			/>
 
 			<div className="logo">
