@@ -1,11 +1,6 @@
 import React, { useState } from "react";
 import MyGroup from "./components/MyGroup.jsx";
 import walletConnectFcn from "./components/hedera/walletConnect.js";
-import tokenCreateFcn from "./components/hedera/tokenCreate.js";
-import tokenMintFcn from "./components/hedera/tokenMint.js";
-import contractDeployFcn from "./components/hedera/contractDeploy.js";
-import contractExecuteFcn from "./components/hedera/contractExecute.js";
-import contractQueryFcn from "./components/hedera/contractQuery.js";
 import "./styles/App.css";
 
 function App() {
@@ -45,60 +40,6 @@ function App() {
 		}
 	}
 
-	async function tokenCreate() {
-		if (tokenId !== undefined) {
-			setCreateTextSt(`You already have token ${tokenId} ✅`);
-		} else if (accountId === undefined) {
-			setCreateTextSt(`🛑 Connect a wallet first! 🛑`);
-		} else {
-			const [tId, supply, txIdRaw] = await tokenCreateFcn(walletData, accountId);
-			setTokenId(tId);
-			setTokenSupply(supply);
-			setCreateTextSt(`Successfully created token with ID: ${tId} ✅`);
-			setMintTextSt();
-			setContractTextSt();
-			setTransferTextSt();
-			const txId = prettify(txIdRaw);
-			setCreateLinkSt(`https://hashscan.io/#/testnet/transaction/${txId}`);
-		}
-	}
-
-	async function tokenMint() {
-		if (tokenId === undefined) {
-			setMintTextSt("🛑 Create a token first! 🛑");
-		} else {
-			const [supply, txIdRaw] = await tokenMintFcn(walletData, accountId, tokenId);
-			setTokenSupply(supply);
-			setMintTextSt(`Supply of token ${tokenId} is ${supply}! ✅`);
-			const txId = prettify(txIdRaw);
-			setMintLinkSt(`https://hashscan.io/#/testnet/transaction/${txId}`);
-		}
-	}
-
-	async function contractDeploy() {
-
-			const [cId, txIdRaw] = await contractDeployFcn(walletData, accountId);
-			setContractId(cId);
-			setContractTextSt(`Successfully deployed smart contract with ID: ${cId} ✅`);
-			setTransferTextSt();
-			const txId = prettify(txIdRaw);
-			setContractLinkSt(`https://hashscan.io/#/testnet/transaction/${txId}`);
-		
-	}
-
-	async function contractExecute() {
-
-			const txIdRaw = await contractExecuteFcn(walletData, accountId, contractId);
-			setTransferTextSt(`🎉🎉🎉 Great job! You completed the demo 🎉🎉🎉`);
-			const txId = prettify(txIdRaw);
-			setTransferLinkSt(`https://hashscan.io/#/testnet/transaction/${txId}`);
-	}
-
-	async function contractQuery(){
-		const txIdRaw = await contractQueryFcn(walletData, accountId, contractId);
-		const txId = prettify(txIdRaw);
-		setTransferLinkSt(`https://hashscan.io/#/testnet/transaction/${txId}`);
-	}
 
 	function prettify(txIdRaw) {
 		const a = txIdRaw.split("@");
@@ -116,40 +57,6 @@ function App() {
 				link={connectLinkSt}
 			/>
 
-			{/* <MyGroup
-				fcn={tokenCreate}
-				buttonLabel={"Create New Token"}
-				text={createTextSt}
-				link={createLinkSt}
-			/>
-
-			<MyGroup
-				fcn={tokenMint}
-				buttonLabel={"Mint 100 New Tokens"}
-				text={mintTextSt}
-				link={mintLinkSt}
-			/> */}
-
-			<MyGroup
-				fcn={contractDeploy}
-				buttonLabel={"Deploy Contract"}
-				text={contractTextSt}
-				link={contractLinkSt}
-			/>
-
-			<MyGroup
-				fcn={contractExecute}
-				buttonLabel={"Change Greeting"}
-				text={trasnferTextSt}
-				link={trasnferLinkSt}
-			/>
-
-			<MyGroup
-				fcn={contractQuery}
-				buttonLabel={"Query Greeting"}
-				text={trasnferTextSt}
-				link={trasnferLinkSt}
-			/>
 			<div className="logo">
 				<div className="symbol">
 					<svg
