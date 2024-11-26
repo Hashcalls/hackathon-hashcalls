@@ -3,6 +3,7 @@ import MyGroup from "./components/MyGroup.jsx";
 import walletConnectFcn from "./components/hedera/walletConnect.js";
 import { sendHbarFcn } from "./components/hedera/hbarTransfer.js";
 import "./styles/App.css";
+import { tokenTransferFcn } from "./components/hedera/tokenTransfer.js";
 
 function App() {
 	const [walletData, setWalletData] = useState();
@@ -33,6 +34,12 @@ function App() {
 		console.log(`- Transaction status: ${txStatus}`);
 	}
 
+	async function sendToken() {
+		const senderAccountId = accountId;
+		const txStatus = await tokenTransferFcn(walletData, senderAccountId,"",100); //Add test token here
+		console.log(`- Transaction status: ${txStatus}`);
+	}
+
 
 
 	function prettify(txIdRaw) {
@@ -54,8 +61,16 @@ function App() {
 			<MyGroup
 				fcn={sendHbar}
 				buttonLabel={"Send HBAR"}
-				text={"🚀 Send 1 HBAR to 0.0.5169915"
+				text={`🚀 Send 1 HBAR to escrow wallet`
 				}
+			/>
+
+			<MyGroup
+			fcn = {sendToken}
+			buttonLabel={"Send Token"}
+			text={`🚀 Send 100 tokens to escrow wallet`
+
+			}
 			/>
 
 			<div className="logo">
