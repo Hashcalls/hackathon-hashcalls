@@ -10,6 +10,19 @@ function App() {
 	const [accountId, setAccountId] = useState();
 	const [connectTextSt, setConnectTextSt] = useState("🔌 Connect here...");
 	const [connectLinkSt, setConnectLinkSt] = useState("");
+	const [callOptions, setCallOptions] = useState([]);
+
+	function addCallOption(token, amount, seller, premium, strike, expiry) {
+		const newCallOption = {
+			token: token,
+			amount: amount,
+			seller: seller,
+			premium: premium,
+			strike: strike,
+			expiry: expiry,
+		};
+		setCallOptions([...callOptions, newCallOption]);
+	}
 
 	async function connectWallet() {
 		if (accountId !== undefined) {
@@ -36,7 +49,7 @@ function App() {
 
 	async function sendToken() {
 		const senderAccountId = accountId;
-		const txStatus = await tokenTransferFcn(walletData, senderAccountId,"",100); //Add test token here
+		const txStatus = await tokenTransferFcn(walletData, senderAccountId,"0.0.5067997",100); //Add test token here
 		console.log(`- Transaction status: ${txStatus}`);
 	}
 
