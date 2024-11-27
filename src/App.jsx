@@ -14,22 +14,82 @@ function App() {
 
   const [token, setToken] = useState("");
   const [amount, setAmount] = useState("");
+  const [seller, setSeller] = useState("");
   const [premium, setPremium] = useState("");
   const [strike, setStrike] = useState("");
   const [expiry, setExpiry] = useState("");
+
+  const [selectedOptionIndex, setSelectedOptionIndex] = useState("");
+
+  async function connectWallet() {
+    if (accountId !== undefined) {
+      setConnectTextSt(`🔌 Account ${accountId} already connected ⚡ ✅`);
+    } else {
+      const wData = await walletConnectFcn();
+      wData[0].pairingEvent.once((pairingData) => {
+        pairingData.accountIds.forEach((id) => {
+          setAccountId(id);
+          console.log(`- Paired account id: ${id}`);
+          setConnectTextSt(`🔌 Account ${id} connected ⚡ ✅`);
+          setConnectLinkSt(`https://hashscan.io/#/testnet/account/${id}`);
+        });
+      });
+      setWalletData(wData);
+    }
+  }
+
+  async function handleBuyOption() {
+    if (selectedOptionIndex === "") {
+      alert("Please select a call option to buy.");
+      return;
+    }
+
+    const selectedOptionIndexNum = parseInt(selectedOptionIndex, 10);
+    const selectedOption = callOptions[selectedOptionIndexNum];
+    console.log("Selected Option:", selectedOption);
+
+    if (selectedOption.buyer) {
+      console.log("This option is already owned by:", selectedOption.buyer);
+      alert("This option has already been purchased.");
+      return;
+    }
+
+    await sendHbarFcn(
+      walletData,
+      accountId,
+      selectedOption.seller,
+      selectedOption.premium
+    );
+
+    // Update the buyer of the selected call option
+    const updatedOptions = [...callOptions];
+    updatedOptions[selectedOptionIndexNum] = {
+      ...selectedOption,
+      buyer: accountId, // Set the buyer to the current wallet
+    };
+
+    setCallOptions(updatedOptions);
+
+    // Log the updated state
+    console.log("Updated Call Options:", updatedOptions);
+    console.log(
+      `Option ${selectedOptionIndexNum + 1} purchased by: ${accountId}`
+    );
+  }
 
   async function addCallOption() {
     const newCallOption = {
       token,
       amount,
-      seller: accountId,
+      seller: seller || accountId, // Use specified seller or default to connected wallet
       premium,
       strike,
       expiry,
+      buyer: null,
     };
 
     // Escrow the token
-    const senderAccountId = accountId;
+    const senderAccountId = accountId; // Use the seller as the sender
     const txStatus = await tokenTransferFcn(
       walletData,
       senderAccountId,
@@ -50,41 +110,8 @@ function App() {
     setPremium("");
     setStrike("");
     setExpiry("");
+    setSeller(""); // Reset seller input
   }
-
-  async function connectWallet() {
-    if (accountId !== undefined) {
-      setConnectTextSt(`🔌 Account ${accountId} already connected ⚡ ✅`);
-    } else {
-      const wData = await walletConnectFcn();
-      wData[0].pairingEvent.once((pairingData) => {
-        pairingData.accountIds.forEach((id) => {
-          setAccountId(id);
-          console.log(`- Paired account id: ${id}`);
-          setConnectTextSt(`🔌 Account ${id} connected ⚡ ✅`);
-          setConnectLinkSt(`https://hashscan.io/#/testnet/account/${id}`);
-        });
-      });
-      setWalletData(wData);
-    }
-  }
-
-  //   async function sendHbar() {
-  //     const senderAccountId = accountId;
-  //     const txStatus = await sendHbarFcn(walletData, senderAccountId);
-  //     console.log(`- Transaction status: ${txStatus}`);
-  //   }
-
-  //   async function sendToken() {
-  //     const senderAccountId = accountId;
-  //     const txStatus = await tokenTransferFcn(
-  //       walletData,
-  //       senderAccountId,
-  //       "0.0.5067997",
-  //       100
-  //     );
-  //     console.log(`- Transaction status: ${txStatus}`);
-  //   }
 
   return (
     <div className="App">
@@ -95,18 +122,6 @@ function App() {
         text={connectTextSt}
         link={connectLinkSt}
       />
-
-      {/* <MyGroup
-                fcn={sendHbar}
-                buttonLabel={"Send HBAR"}
-                text={`🚀 Send 1 HBAR to escrow wallet`}
-            />
-
-            <MyGroup
-                fcn={sendToken}
-                buttonLabel={"Send Token"}
-                text={`🚀 Send 100 tokens to escrow wallet`}
-            /> */}
 
       <div>
         <h2>Create a Call Option</h2>
@@ -155,7 +170,38 @@ function App() {
             onChange={(e) => setExpiry(e.target.value)}
           />
         </div>
+        <div>
+          <label htmlFor="seller">Seller Account ID (optional): </label>
+          <input
+            id="seller"
+            type="text"
+            value={seller}
+            onChange={(e) => setSeller(e.target.value)}
+            placeholder={accountId || "Connected wallet ID"}
+          />
+        </div>
         <button onClick={addCallOption}>Add Call Option</button>
+      </div>
+
+      <div>
+        <h2>Buy a Call Option</h2>
+        <div>
+          <label htmlFor="options">Select Call Option: </label>
+          <select
+            id="options"
+            value={selectedOptionIndex}
+            onChange={(e) => setSelectedOptionIndex(e.target.value)}
+          >
+            <option value="">-- Select an Option --</option>
+            {callOptions.map((option, index) => (
+              <option key={index} value={index}>
+                Option {index + 1} - Token: {option.token}, Amount:{" "}
+                {option.amount}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button onClick={handleBuyOption}>Buy Option</button>
       </div>
 
       <div className="logo">

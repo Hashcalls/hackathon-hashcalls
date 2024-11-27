@@ -1,6 +1,6 @@
 import { TransferTransaction, Hbar } from "@hashgraph/sdk";
 
-export async function sendHbarFcn(walletData, senderAccountId) {
+export async function sendHbarFcn(walletData, senderAccountId, receiverAccountId, amount) {
     const escrowAccountId = process.env.REACT_APP_ESCROW_ID;
     console.log(escrowAccountId);
     console.log(`\n=======================================`);
@@ -14,8 +14,8 @@ export async function sendHbarFcn(walletData, senderAccountId) {
 
     try {
         const transferTx = await new TransferTransaction()
-            .addHbarTransfer(senderAccountId, new Hbar(-1)) // Deduct 1 HBAR from sender
-            .addHbarTransfer(escrowAccountId, new Hbar(1)) // Add 1 HBAR to recipient
+            .addHbarTransfer(senderAccountId, new Hbar(-amount)) // Deduct 1 HBAR from sender
+            .addHbarTransfer(receiverAccountId, new Hbar(amount)) // Add 1 HBAR to recipient
             .freezeWithSigner(signer);
 
         const signedTx = await transferTx.signWithSigner(signer);
