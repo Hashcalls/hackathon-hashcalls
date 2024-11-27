@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import MyGroup from "./components/MyGroup.jsx";
 import walletConnectFcn from "./components/hedera/walletConnect.js";
 import { sendHbarFcn } from "./components/hedera/hbarTransfer.js";
 import "./styles/App.css";
@@ -178,12 +177,16 @@ function App() {
   return (
     <div className="App">
       <h1 className="header">HASHCALLS</h1>
-      <MyGroup
-        fcn={connectWallet}
-        buttonLabel={"Connect Wallet"}
-        text={connectTextSt}
-        link={connectLinkSt}
-      />
+      <div>
+        <button onClick={connectWallet} className="cta-button">
+          {connectTextSt}
+        </button>
+        {connectLinkSt && (
+          <a href={connectLinkSt} target="_blank" rel="noreferrer">
+            View on HashScan
+          </a>
+        )}
+      </div>
 
       <div>
         <h2>Create a Call Option</h2>

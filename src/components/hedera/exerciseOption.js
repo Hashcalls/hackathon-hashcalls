@@ -41,70 +41,38 @@ export const exerciseOptionFcn = async (
   const signer = hashconnect.getSigner(provider);
 
   try {
-    // Step 1: Pay the strike price from buyer to seller
-    console.log("Initiating HBAR transfer for strike price...");
-    const hbarTx = await new TransferTransaction()
+    // Step 1: Create the combined transaction
+    console.log("Creating combined transfer transaction...");
+
+    const tx = await new TransferTransaction()
       .addHbarTransfer(sellerId, new Hbar(strikePrice)) // Pay strike price to seller
       .addHbarTransfer(buyerId, new Hbar(-strikePrice)) // Deduct strike price from buyer
-      .freezeWithSigner(signer);
+      .addTokenTransfer(tokenId, escrowAccountId, -payout) // Release tokens from escrow
+      .addTokenTransfer(tokenId, buyerId, payout) // Send tokens to buyer
+      .freezeWith(client);
 
-    console.log(
-      `HBAR Transfer Details:\n - From Buyer: ${buyerId}\n - To Seller: ${sellerId}\n - Amount: ${strikePrice} HBAR`
+      const signedTx = await tx.sign(escrowAccountKey);
+      const txResponse = await signedTx.executeWithSigner(signer);
+
+    const receipt = await provider.getTransactionReceipt(
+      txResponse.transactionId
     );
 
-    const hbarSignedTx = await hbarTx.signWithSigner(signer); // Sign with buyer's wallet
-    const hbarTxResponse = await hbarSignedTx.executeWithSigner(signer); // Execute using buyer's wallet
-    const hbarReceipt = await provider.getTransactionReceipt(
-      hbarTxResponse.transactionId
-    );
-
-    if (hbarReceipt.status._code !== 22) {
+    if (receipt.status._code !== 22) {
       throw new Error(
-        `HBAR transfer failed with status: ${hbarReceipt.status.toString()}`
+        `Transaction failed with status: ${receipt.status.toString()}`
       );
     }
+
+    console.log(
+      `${payout} tokens successfully transferred from Escrow (${escrowAccountId}) to Buyer (${buyerId}).`
+    );
     console.log(
       `${strikePrice} HBAR successfully transferred from Buyer (${buyerId}) to Seller (${sellerId}).`
     );
 
-    // Step 2: Ask for user confirmation before transferring tokens
-    console.log("Prompting user for confirmation to transfer tokens...");
-    const userConfirmed = window.confirm(
-      `The strike price of ${strikePrice} HBAR has been paid to the seller (${sellerId}). Do you want to proceed with transferring ${payout} tokens from escrow (${escrowAccountId}) to the buyer (${buyerId})?`
-    );
-
-    if (!userConfirmed) {
-      console.log(
-        "User canceled the token transfer. Strike price remains paid, and the process is terminated."
-      );
-      return;
-    }
-
-    // Step 3: Transfer tokens from escrow to buyer
-    console.log("Initiating token transfer from escrow to buyer...");
-    const tokenTx = await new TransferTransaction()
-      .addTokenTransfer(tokenId, escrowAccountId, -payout) // Release tokens from escrow
-      .addTokenTransfer(tokenId, buyerId, payout) // Send tokens to buyer
-      .freezeWith(client)
-      .sign(escrowAccountKey);
-
-    console.log(
-      `Token Transfer Details:\n - From Escrow: ${escrowAccountId}\n - To Buyer: ${buyerId}\n - Token ID: ${tokenId}\n - Amount: ${payout}`
-    );
-
-    const tokenTxResponse = await tokenTx.execute(client);
-    const tokenReceipt = await tokenTxResponse.getReceipt(client);
-
-    if (tokenReceipt.status._code !== 22) {
-      throw new Error(
-        `Token transfer failed with status: ${tokenReceipt.status.toString()}`
-      );
-    }
-    console.log(
-      `${payout} tokens successfully transferred from Escrow (${escrowAccountId}) to Buyer (${buyerId}).`
-    );
-
     console.log("=== Option Exercise Completed Successfully ===");
+    return receipt;
   } catch (e) {
     console.error("Error during exerciseOptionFcn:", e);
     throw e;
