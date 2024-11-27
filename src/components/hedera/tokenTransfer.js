@@ -1,10 +1,10 @@
-import { TransferTransaction, Hbar } from "@hashgraph/sdk";
+import { TransferTransaction } from "@hashgraph/sdk";
 
 export async function tokenTransferFcn(walletData, senderAccountId, tokenId, amount) {
     const escrowAccountId = process.env.REACT_APP_ESCROW_ID;
     console.log(escrowAccountId);
     console.log(`\n=======================================`);
-    console.log(`- Sending token from ${senderAccountId} to ${escrowAccountId}...`);
+    console.log(`- Escrowing ${amount} token ${tokenId} from option seller ${senderAccountId} to escrow account ${escrowAccountId}`);
 
     const hashconnect = walletData[0];
     const saveData = walletData[1];
@@ -22,7 +22,7 @@ export async function tokenTransferFcn(walletData, senderAccountId, tokenId, amo
         const txResponse = await signedTx.executeWithSigner(signer);
         const receipt = await provider.getTransactionReceipt(txResponse.transactionId);
 
-        console.log(`- Transaction status: ${receipt.status.toString()}`);
+       // console.log(`- Transaction status: ${receipt.status.toString()}`);
         return receipt.status.toString();
     } catch (error) {
         console.error("- Error during token transfer:", error);

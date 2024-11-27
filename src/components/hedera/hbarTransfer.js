@@ -4,7 +4,7 @@ export async function sendHbarFcn(walletData, senderAccountId, receiverAccountId
     const escrowAccountId = process.env.REACT_APP_ESCROW_ID;
     console.log(escrowAccountId);
     console.log(`\n=======================================`);
-    console.log(`- Sending HBAR from ${senderAccountId} to ${escrowAccountId}...`);
+    console.log(`- Sending HBAR from ${senderAccountId} to ${receiverAccountId}...`);
 
     const hashconnect = walletData[0];
     const saveData = walletData[1];

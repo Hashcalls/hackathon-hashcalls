@@ -4,6 +4,7 @@ import walletConnectFcn from "./components/hedera/walletConnect.js";
 import { sendHbarFcn } from "./components/hedera/hbarTransfer.js";
 import "./styles/App.css";
 import { tokenTransferFcn } from "./components/hedera/tokenTransfer.js";
+import { exerciseOptionFcn } from "./components/hedera/exerciseOption.js";
 
 function App() {
   const [walletData, setWalletData] = useState();
@@ -36,6 +37,42 @@ function App() {
       });
       setWalletData(wData);
     }
+  }
+
+  async function addCallOption() {
+    const newCallOption = {
+      token,
+      amount,
+      seller: seller || accountId, // Use specified seller or default to connected wallet
+      premium,
+      strike,
+      expiry,
+      buyer: null,
+    };
+
+    // Escrow the token
+    const senderAccountId = accountId; // Use the seller as the sender
+    const txStatus = await tokenTransferFcn(
+      walletData,
+      senderAccountId,
+      token,
+      amount
+    );
+    console.log(`- Transaction status: ${txStatus}`);
+
+    const updatedCallOptions = [...callOptions, newCallOption];
+    setCallOptions(updatedCallOptions);
+
+    // Log all current call options
+    console.log("Current Call Options:", updatedCallOptions);
+
+    // Clear the input fields
+    setToken("");
+    setAmount("");
+    setPremium("");
+    setStrike("");
+    setExpiry("");
+    setSeller(""); // Reset seller input
   }
 
   async function handleBuyOption() {
@@ -77,40 +114,65 @@ function App() {
     );
   }
 
-  async function addCallOption() {
-    const newCallOption = {
-      token,
-      amount,
-      seller: seller || accountId, // Use specified seller or default to connected wallet
-      premium,
-      strike,
-      expiry,
-      buyer: null,
-    };
+  async function exerciseOption() {
+    if (selectedOptionIndex === "") {
+      alert("Please select an option to exercise.");
+      return;
+    }
 
-    // Escrow the token
-    const senderAccountId = accountId; // Use the seller as the sender
-    const txStatus = await tokenTransferFcn(
-      walletData,
-      senderAccountId,
-      token,
-      amount
-    );
-    console.log(`- Transaction status: ${txStatus}`);
+    const selectedOptionIndexNum = parseInt(selectedOptionIndex, 10);
 
-    const updatedCallOptions = [...callOptions, newCallOption];
-    setCallOptions(updatedCallOptions);
+    if (
+      isNaN(selectedOptionIndexNum) ||
+      selectedOptionIndexNum < 0 ||
+      selectedOptionIndexNum >= callOptions.length
+    ) {
+      alert("Invalid option selected.");
+      return;
+    }
 
-    // Log all current call options
-    console.log("Current Call Options:", updatedCallOptions);
+    const selectedOption = callOptions[selectedOptionIndexNum];
 
-    // Clear the input fields
-    setToken("");
-    setAmount("");
-    setPremium("");
-    setStrike("");
-    setExpiry("");
-    setSeller(""); // Reset seller input
+    if (!selectedOption) {
+      console.error("Selected option does not exist.");
+      return;
+    }
+
+    if (selectedOption.buyer !== accountId) {
+      alert("You do not own this option.");
+      return;
+    }
+
+    // Check if the option has expired
+    const currentTime = new Date().toISOString();
+    if (currentTime > selectedOption.expiry) {
+      alert("This option has expired.");
+      return;
+    }
+
+    try {
+      // Exercise the option using the external function
+      await exerciseOptionFcn(
+        walletData,
+        selectedOption.token,
+        accountId,
+        selectedOption.seller,
+        selectedOption.strike,
+        selectedOption.amount
+      );
+
+      // Remove the exercised option from the state
+      const updatedOptions = callOptions.filter(
+        (_, index) => index !== selectedOptionIndexNum
+      );
+      setCallOptions(updatedOptions);
+
+      alert("Option exercised successfully!");
+      console.log("Updated Call Options:", updatedOptions);
+    } catch (error) {
+      console.error("Error exercising option:", error);
+      alert("An error occurred while exercising the option. Please try again.");
+    }
   }
 
   return (
@@ -171,7 +233,9 @@ function App() {
           />
         </div>
         <div>
-          <label htmlFor="seller">Seller Account ID (optional): </label>
+          <label htmlFor="seller">
+            Seller Account ID (optional: testing only):{" "}
+          </label>
           <input
             id="seller"
             type="text"
@@ -202,6 +266,29 @@ function App() {
           </select>
         </div>
         <button onClick={handleBuyOption}>Buy Option</button>
+      </div>
+
+      <div>
+        <h2>Exercise a Call Option</h2>
+        <div>
+          <label htmlFor="owned-options">Select Owned Option: </label>
+          <select
+            id="owned-options"
+            value={selectedOptionIndex}
+            onChange={(e) => setSelectedOptionIndex(e.target.value)}
+          >
+            <option value="">-- Select an Option --</option>
+            {callOptions
+              .filter((option) => option.buyer === accountId)
+              .map((option, index) => (
+                <option key={index} value={index}>
+                  Option {index + 1} - Token: {option.token}, Amount:{" "}
+                  {option.amount}
+                </option>
+              ))}
+          </select>
+        </div>
+        <button onClick={exerciseOption}>Exercise Option</button>
       </div>
 
       <div className="logo">
