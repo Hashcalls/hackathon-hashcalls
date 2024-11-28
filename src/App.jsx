@@ -3,7 +3,8 @@ import walletConnectFcn from "./components/hedera/walletConnect.js";
 import { sendHbarFcn } from "./components/hedera/hbarTransfer.js";
 import "./styles/App.css";
 import { tokenTransferFcn } from "./components/hedera/tokenTransfer.js";
-import { exerciseOptionFcn } from "./components/hedera/exerciseOption.js";
+import { exerciseCallOptionFcn } from "./components/hedera/exerciseCallOption.js";
+import { exercisePutOptionFcn } from "./components/hedera/exercisePut.js";
 
 function App() {
   // State for connected wallet
@@ -129,7 +130,7 @@ function App() {
     setPutSeller(""); // Reset seller input
   }
 
-  async function handleBuyOption() {
+  async function buyCallOption() {
     if (selectedCallIndex === "") {
       alert("Please select a call option to buy.");
       return;
@@ -168,7 +169,58 @@ function App() {
     );
   }
 
-  async function exerciseOption() {
+  async function buyPutOption() {
+    if (selectedPutIndex === "") {
+      alert("Please select a put option to buy.");
+      return;
+    }
+
+    const selectedPutIndexNum = parseInt(selectedPutIndex, 10);
+    const selectedOption = putOptions[selectedPutIndexNum];
+    console.log("Selected Put Option:", selectedOption);
+
+    if (selectedOption.buyer) {
+      console.log("This put option is already owned by:", selectedOption.buyer);
+      alert("This put option has already been purchased.");
+      return;
+    }
+
+    try {
+      // Send the premium to the seller
+      await sendHbarFcn(
+        walletData,
+        accountId,
+        selectedOption.seller,
+        selectedOption.premium
+      );
+      console.log(
+        `Premium of ${selectedOption.premium} HBAR successfully sent to seller ${selectedOption.seller}.`
+      );
+
+      // Update the buyer of the selected put option
+      const updatedOptions = [...putOptions];
+      updatedOptions[selectedPutIndexNum] = {
+        ...selectedOption,
+        buyer: accountId, // Set the buyer to the current wallet
+      };
+
+      setPutOptions(updatedOptions);
+
+      // Log the updated state
+      console.log("Updated Put Options:", updatedOptions);
+      console.log(
+        `Put Option ${selectedPutIndexNum + 1} purchased by: ${accountId}`
+      );
+      alert("Put Option purchased successfully!");
+    } catch (error) {
+      console.error("Error purchasing put option:", error);
+      alert(
+        "An error occurred while purchasing the put option. Please try again."
+      );
+    }
+  }
+
+  async function exerciseCallOption() {
     if (selectedCallIndex === "") {
       alert("Please select an option to exercise.");
       return;
@@ -206,7 +258,7 @@ function App() {
 
     try {
       // Exercise the option using the external function
-      await exerciseOptionFcn(
+      await exerciseCallOptionFcn(
         walletData,
         selectedOption.token,
         accountId,
@@ -226,6 +278,68 @@ function App() {
     } catch (error) {
       console.error("Error exercising option:", error);
       alert("An error occurred while exercising the option. Please try again.");
+    }
+  }
+  async function exercisePutOption() {
+    if (selectedPutIndex === "") {
+      alert("Please select an option to exercise.");
+      return;
+    }
+
+    const selectedPutIndexNum = parseInt(selectedPutIndex, 10);
+
+    if (
+      isNaN(selectedPutIndexNum) ||
+      selectedPutIndexNum < 0 ||
+      selectedPutIndexNum >= putOptions.length
+    ) {
+      alert("Invalid option selected.");
+      return;
+    }
+
+    const selectedOption = putOptions[selectedPutIndexNum];
+
+    if (!selectedOption) {
+      console.error("Selected option does not exist.");
+      return;
+    }
+
+    if (selectedOption.buyer !== accountId) {
+      alert("You do not own this option.");
+      return;
+    }
+
+    // Check if the option has expired
+    const currentTime = new Date().toISOString();
+    if (currentTime > selectedOption.expiry) {
+      alert("This option has expired.");
+      return;
+    }
+
+    try {
+      // Exercise the put option using the external function
+      await exercisePutOptionFcn(
+        walletData,
+        selectedOption.token,
+        accountId, // Buyer
+        selectedOption.seller,
+        selectedOption.strike,
+        selectedOption.amount
+      );
+
+      // Remove the exercised option from the state
+      const updatedOptions = putOptions.filter(
+        (_, index) => index !== selectedPutIndexNum
+      );
+      setPutOptions(updatedOptions);
+
+      alert("Put option exercised successfully!");
+      console.log("Updated Put Options:", updatedOptions);
+    } catch (error) {
+      console.error("Error exercising put option:", error);
+      alert(
+        "An error occurred while exercising the put option. Please try again."
+      );
     }
   }
 
@@ -324,7 +438,7 @@ function App() {
             ))}
           </select>
         </div>
-        <button onClick={handleBuyOption}>Buy Option</button>
+        <button onClick={buyCallOption}>Buy Option</button>
       </div>
 
       <div>
@@ -347,7 +461,7 @@ function App() {
               ))}
           </select>
         </div>
-        <button onClick={exerciseOption}>Exercise Option</button>
+        <button onClick={exerciseCallOption}>Exercise Option</button>
       </div>
 
       {/* Put Options Section */}
@@ -431,7 +545,7 @@ function App() {
             ))}
           </select>
         </div>
-        <button >Buy Put Option</button>
+        <button onClick={buyPutOption}>Buy Put Option</button>
       </div>
 
       <div>
@@ -454,7 +568,7 @@ function App() {
               ))}
           </select>
         </div>
-        <button>Exercise Put Option</button>
+        <button onClick={exercisePutOption}>Exercise Put Option</button>
       </div>
 
       <div className="logo">

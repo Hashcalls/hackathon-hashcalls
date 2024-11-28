@@ -6,7 +6,7 @@ import {
   TransferTransaction,
 } from "@hashgraph/sdk";
 
-export const exerciseOptionFcn = async (
+export const exerciseCallOptionFcn = async (
   walletData,
   tokenId,
   buyerId,
