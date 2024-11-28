@@ -6,12 +6,14 @@ import { tokenTransferFcn } from "./components/hedera/tokenTransfer.js";
 import { exerciseOptionFcn } from "./components/hedera/exerciseOption.js";
 
 function App() {
+  // State for connected wallet
   const [walletData, setWalletData] = useState();
   const [accountId, setAccountId] = useState();
   const [connectTextSt, setConnectTextSt] = useState("🔌 Connect here...");
   const [connectLinkSt, setConnectLinkSt] = useState("");
-  const [callOptions, setCallOptions] = useState([]);
 
+  //State for call options
+  const [callOptions, setCallOptions] = useState([]);
   const [token, setToken] = useState("");
   const [amount, setAmount] = useState("");
   const [seller, setSeller] = useState("");
@@ -19,7 +21,17 @@ function App() {
   const [strike, setStrike] = useState("");
   const [expiry, setExpiry] = useState("");
 
-  const [selectedOptionIndex, setSelectedOptionIndex] = useState("");
+  const [selectedCallIndex, setselectedCallIndex] = useState("");
+
+  // States for Put Options
+  const [putOptions, setPutOptions] = useState([]);
+  const [putToken, setPutToken] = useState("");
+  const [putAmount, setPutAmount] = useState("");
+  const [putSeller, setPutSeller] = useState("");
+  const [putPremium, setPutPremium] = useState("");
+  const [putStrike, setPutStrike] = useState("");
+  const [putExpiry, setPutExpiry] = useState("");
+  const [selectedPutIndex, setSelectedPutIndex] = useState("");
 
   async function connectWallet() {
     if (accountId !== undefined) {
@@ -74,14 +86,57 @@ function App() {
     setSeller(""); // Reset seller input
   }
 
+  async function addPutOption() {
+    const newPutOption = {
+      token: putToken,
+      amount: putAmount,
+      seller: putSeller || accountId, // Use specified seller or default to connected wallet
+      premium: putPremium,
+      strike: putStrike,
+      expiry: putExpiry,
+      buyer: null,
+    };
+
+    // Escrow the HBAR (strike price)
+    const senderAccountId = accountId; // Use the seller as the sender
+    try {
+      const txStatus = await sendHbarFcn(
+        walletData,
+        senderAccountId,
+        process.env.REACT_APP_ESCROW_ID, // Send HBAR to escrow account
+        putStrike
+      );
+      console.log(`- HBAR Escrow Transaction Status: ${txStatus}`);
+    } catch (error) {
+      console.error("Error during HBAR escrow transaction:", error);
+      alert("Failed to escrow HBAR for the put option. Please try again.");
+      return;
+    }
+
+    // Update the Put Options State
+    const updatedPutOptions = [...putOptions, newPutOption];
+    setPutOptions(updatedPutOptions);
+
+    // Log all current put options
+    console.log("Current Put Options:", updatedPutOptions);
+
+    // Clear the input fields
+    setPutToken("");
+    setPutAmount("");
+    setPutPremium("");
+    setPutStrike("");
+    setPutExpiry("");
+    setPutSeller(""); // Reset seller input
+  }
+
   async function handleBuyOption() {
-    if (selectedOptionIndex === "") {
+    if (selectedCallIndex === "") {
       alert("Please select a call option to buy.");
       return;
     }
 
-    const selectedOptionIndexNum = parseInt(selectedOptionIndex, 10);
-    const selectedOption = callOptions[selectedOptionIndexNum];
+    const selectedCallIndexNum = parseInt(selectedCallIndex, 10);
+    const selectedOption = callOptions[selectedCallIndexNum];
     console.log("Selected Option:", selectedOption);
 
     if (selectedOption.buyer) {
@@ -99,7 +154,7 @@ function App() {
 
     // Update the buyer of the selected call option
     const updatedOptions = [...callOptions];
-    updatedOptions[selectedOptionIndexNum] = {
+    updatedOptions[selectedCallIndexNum] = {
       ...selectedOption,
       buyer: accountId, // Set the buyer to the current wallet
     };
@@ -109,28 +164,28 @@ function App() {
     // Log the updated state
     console.log("Updated Call Options:", updatedOptions);
     console.log(
-      `Option ${selectedOptionIndexNum + 1} purchased by: ${accountId}`
+      `Option ${selectedCallIndexNum + 1} purchased by: ${accountId}`
     );
   }
 
   async function exerciseOption() {
-    if (selectedOptionIndex === "") {
+    if (selectedCallIndex === "") {
       alert("Please select an option to exercise.");
       return;
     }
 
-    const selectedOptionIndexNum = parseInt(selectedOptionIndex, 10);
+    const selectedCallIndexNum = parseInt(selectedCallIndex, 10);
 
     if (
-      isNaN(selectedOptionIndexNum) ||
-      selectedOptionIndexNum < 0 ||
-      selectedOptionIndexNum >= callOptions.length
+      isNaN(selectedCallIndexNum) ||
+      selectedCallIndexNum < 0 ||
+      selectedCallIndexNum >= callOptions.length
     ) {
       alert("Invalid option selected.");
       return;
     }
 
-    const selectedOption = callOptions[selectedOptionIndexNum];
+    const selectedOption = callOptions[selectedCallIndexNum];
 
     if (!selectedOption) {
       console.error("Selected option does not exist.");
@@ -162,7 +217,7 @@ function App() {
 
       // Remove the exercised option from the state
       const updatedOptions = callOptions.filter(
-        (_, index) => index !== selectedOptionIndexNum
+        (_, index) => index !== selectedCallIndexNum
       );
       setCallOptions(updatedOptions);
 
@@ -189,6 +244,7 @@ function App() {
       </div>
 
       <div>
+        {/* Call  Options Section */}
         <h2>Create a Call Option</h2>
         <div>
           <label htmlFor="token">Token: </label>
@@ -256,8 +312,8 @@ function App() {
           <label htmlFor="options">Select Call Option: </label>
           <select
             id="options"
-            value={selectedOptionIndex}
-            onChange={(e) => setSelectedOptionIndex(e.target.value)}
+            value={selectedCallIndex}
+            onChange={(e) => setselectedCallIndex(e.target.value)}
           >
             <option value="">-- Select an Option --</option>
             {callOptions.map((option, index) => (
@@ -277,8 +333,8 @@ function App() {
           <label htmlFor="owned-options">Select Owned Option: </label>
           <select
             id="owned-options"
-            value={selectedOptionIndex}
-            onChange={(e) => setSelectedOptionIndex(e.target.value)}
+            value={selectedCallIndex}
+            onChange={(e) => setselectedCallIndex(e.target.value)}
           >
             <option value="">-- Select an Option --</option>
             {callOptions
@@ -292,6 +348,113 @@ function App() {
           </select>
         </div>
         <button onClick={exerciseOption}>Exercise Option</button>
+      </div>
+
+      {/* Put Options Section */}
+      <div>
+        <h2>Create a Put Option</h2>
+        {/* Form Fields */}
+        <div>
+          <label htmlFor="putToken">Token: </label>
+          <input
+            id="putToken"
+            type="text"
+            value={putToken}
+            onChange={(e) => setPutToken(e.target.value)}
+          />
+        </div>
+        <div>
+          <label htmlFor="putAmount">Amount: </label>
+          <input
+            id="putAmount"
+            type="number"
+            value={putAmount}
+            onChange={(e) => setPutAmount(e.target.value)}
+          />
+        </div>
+        <div>
+          <label htmlFor="putPremium">Premium: </label>
+          <input
+            id="putPremium"
+            type="number"
+            value={putPremium}
+            onChange={(e) => setPutPremium(e.target.value)}
+          />
+        </div>
+        <div>
+          <label htmlFor="putStrike">Strike Price: </label>
+          <input
+            id="putStrike"
+            type="number"
+            value={putStrike}
+            onChange={(e) => setPutStrike(e.target.value)}
+          />
+        </div>
+        <div>
+          <label htmlFor="putExpiry">Expiry Date: </label>
+          <input
+            id="putExpiry"
+            type="datetime-local"
+            value={putExpiry}
+            onChange={(e) => setPutExpiry(e.target.value)}
+          />
+        </div>
+        <div>
+          <label htmlFor="putSeller">
+            Seller Account ID (optional: testing only):{" "}
+          </label>
+          <input
+            id="putSeller"
+            type="text"
+            value={putSeller}
+            onChange={(e) => setPutSeller(e.target.value)}
+            placeholder={accountId || "Connected wallet ID"}
+          />
+        </div>
+        <button onClick={addPutOption}>Add Put Option</button>
+      </div>
+      <div>
+        <h2>Buy a Put Option</h2>
+        <div>
+          <label htmlFor="put-options">Select Put Option: </label>
+          <select
+            id="put-options"
+            value={selectedPutIndex}
+            onChange={(e) => setSelectedPutIndex(e.target.value)}
+          >
+            <option value="">-- Select an Option --</option>
+            {putOptions.map((option, index) => (
+              <option key={index} value={index}>
+                Put Option {index + 1} - Token: {option.token}, Amount:{" "}
+                {option.amount}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button >Buy Put Option</button>
+      </div>
+
+      <div>
+        <h2>Exercise a Put Option</h2>
+        <div>
+          <label htmlFor="owned-put-options">Select Owned Put Option: </label>
+          <select
+            id="owned-put-options"
+            value={selectedPutIndex}
+            onChange={(e) => setSelectedPutIndex(e.target.value)}
+          >
+            <option value="">-- Select an Option --</option>
+            {putOptions
+              .filter((option) => option.buyer === accountId)
+              .map((option, index) => (
+                <option key={index} value={index}>
+                  Put Option {index + 1} - Token: {option.token}, Amount:{" "}
+                  {option.amount}
+                </option>
+              ))}
+          </select>
+        </div>
+        <button>Exercise Put Option</button>
       </div>
 
       <div className="logo">
