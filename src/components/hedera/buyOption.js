@@ -34,7 +34,7 @@ export async function buyOptionFcn(
 
     // Get the receipt and confirm the serial number
     const mintReceipt = await mintTxResponse.getReceipt(client);
-    const serialNumber = mintReceipt.serials[0];
+    const serialNumber = mintReceipt.serials[0].toNumber(); // Convert Long to number
     console.log(
       `- NFT minted successfully with serial number: ${serialNumber}`
     );

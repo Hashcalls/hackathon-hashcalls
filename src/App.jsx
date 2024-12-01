@@ -161,6 +161,7 @@ function App() {
     updatedOptions[selectedCallIndexNum] = {
       ...selectedOption,
       buyer: accountId, // Set the buyer to the current wallet
+      nftSerial: serialNumber,
     };
 
     setCallOptions(updatedOptions);
@@ -264,6 +265,7 @@ function App() {
       await exerciseCallOptionFcn(
         walletData,
         selectedOption.token,
+        selectedOption.nftSerial,
         accountId,
         selectedOption.seller,
         selectedOption.strike,
