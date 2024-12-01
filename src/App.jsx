@@ -190,22 +190,20 @@ function App() {
     }
 
     try {
-      // Send the premium to the seller
-      await sendHbarFcn(
+      const serialNumber = await buyOptionFcn(
         walletData,
         accountId,
         selectedOption.seller,
         selectedOption.premium
       );
-      console.log(
-        `Premium of ${selectedOption.premium} HBAR successfully sent to seller ${selectedOption.seller}.`
-      );
+      console.log("NFT Serial Number:", serialNumber);
 
       // Update the buyer of the selected put option
       const updatedOptions = [...putOptions];
       updatedOptions[selectedPutIndexNum] = {
         ...selectedOption,
-        buyer: accountId, // Set the buyer to the current wallet
+        buyer: accountId,
+        nftSerial: serialNumber,
       };
 
       setPutOptions(updatedOptions);
@@ -326,6 +324,7 @@ function App() {
       await exercisePutOptionFcn(
         walletData,
         selectedOption.token,
+        selectedOption.nftSerial,
         accountId, // Buyer
         selectedOption.seller,
         selectedOption.strike,
