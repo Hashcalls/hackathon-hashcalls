@@ -4,6 +4,7 @@ import {
   PrivateKey,
   Hbar,
   TransferTransaction,
+  TokenWipeTransaction,
 } from "@hashgraph/sdk";
 import { hasNft } from "./hasNft";
 
@@ -82,7 +83,24 @@ export const exerciseCallOptionFcn = async (
       `${strikePrice} HBAR successfully transferred from Buyer (${buyerId}) to Seller (${sellerId}).`
     );
 
+    console.log("--------------------------------------");
+    console.log("Wiping NFT from buyer account...");
+    const nftId = process.env.REACT_APP_NFT_ID;
+    const wipeTx = await new TokenWipeTransaction()
+      .setTokenId(nftId)
+      .setAccountId(buyerId)
+      .setSerials([serialNumber])
+      .freezeWith(client);
+
+    const wipeTxSigned = await wipeTx.sign(escrowAccountKey);
+    const wipeTxResponse = await wipeTxSigned.execute(client);
+    const wipeReceipt = await wipeTxResponse.getReceipt(client);
+
+    console.log(
+      `NFT wiped successfully. Transaction status: ${wipeReceipt.status}`
+    );
     console.log("=== Option Exercise Completed Successfully ===");
+
     return receipt;
   } catch (e) {
     console.error("Error during exerciseOptionFcn:", e);

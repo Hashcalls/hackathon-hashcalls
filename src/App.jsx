@@ -309,10 +309,10 @@ function App() {
       return;
     }
 
-    if (selectedOption.buyer !== accountId) {
-      alert("You do not own this option.");
-      return;
-    }
+    // if (selectedOption.buyer !== accountId) {
+    //   alert("You do not own this option.");
+    //   return;
+    // }
 
     // Check if the option has expired
     const currentTime = new Date().toISOString();
