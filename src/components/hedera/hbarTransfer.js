@@ -14,8 +14,8 @@ export async function sendHbarFcn(walletData, senderAccountId, receiverAccountId
 
     try {
         const transferTx = await new TransferTransaction()
-            .addHbarTransfer(senderAccountId, new Hbar(-amount)) // Deduct 1 HBAR from sender
-            .addHbarTransfer(receiverAccountId, new Hbar(amount)) // Add 1 HBAR to recipient
+            .addHbarTransfer(senderAccountId, new Hbar(-amount)) 
+            .addHbarTransfer(receiverAccountId, new Hbar(amount)) 
             .freezeWithSigner(signer);
 
         const signedTx = await transferTx.signWithSigner(signer);

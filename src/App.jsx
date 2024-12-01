@@ -5,6 +5,7 @@ import "./styles/App.css";
 import { tokenTransferFcn } from "./components/hedera/tokenTransfer.js";
 import { exerciseCallOptionFcn } from "./components/hedera/exerciseCallOption.js";
 import { exercisePutOptionFcn } from "./components/hedera/exercisePut.js";
+import { buyOptionFcn } from "./components/hedera/buyOption.js";
 
 function App() {
   // State for connected wallet
@@ -60,6 +61,7 @@ function App() {
       strike,
       expiry,
       buyer: null,
+      nftSerial: null,
     };
 
     // Escrow the token
@@ -146,12 +148,13 @@ function App() {
       return;
     }
 
-    await sendHbarFcn(
+    const serialNumber = await buyOptionFcn(
       walletData,
       accountId,
       selectedOption.seller,
       selectedOption.premium
     );
+    console.log(serialNumber);
 
     // Update the buyer of the selected call option
     const updatedOptions = [...callOptions];
