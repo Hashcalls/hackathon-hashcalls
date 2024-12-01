@@ -5,6 +5,7 @@ import "./styles/App.css";
 import { tokenTransferFcn } from "./components/hedera/tokenTransfer.js";
 import { exerciseCallOptionFcn } from "./components/hedera/exerciseCallOption.js";
 import { exercisePutOptionFcn } from "./components/hedera/exercisePut.js";
+import { buyOptionFcn } from "./components/hedera/buyOption.js";
 
 function App() {
   // State for connected wallet
@@ -60,6 +61,7 @@ function App() {
       strike,
       expiry,
       buyer: null,
+      nftSerial: null,
     };
 
     // Escrow the token
@@ -146,18 +148,20 @@ function App() {
       return;
     }
 
-    await sendHbarFcn(
+    const serialNumber = await buyOptionFcn(
       walletData,
       accountId,
       selectedOption.seller,
       selectedOption.premium
     );
+    console.log(serialNumber);
 
     // Update the buyer of the selected call option
     const updatedOptions = [...callOptions];
     updatedOptions[selectedCallIndexNum] = {
       ...selectedOption,
       buyer: accountId, // Set the buyer to the current wallet
+      nftSerial: serialNumber,
     };
 
     setCallOptions(updatedOptions);
@@ -186,22 +190,20 @@ function App() {
     }
 
     try {
-      // Send the premium to the seller
-      await sendHbarFcn(
+      const serialNumber = await buyOptionFcn(
         walletData,
         accountId,
         selectedOption.seller,
         selectedOption.premium
       );
-      console.log(
-        `Premium of ${selectedOption.premium} HBAR successfully sent to seller ${selectedOption.seller}.`
-      );
+      console.log("NFT Serial Number:", serialNumber);
 
       // Update the buyer of the selected put option
       const updatedOptions = [...putOptions];
       updatedOptions[selectedPutIndexNum] = {
         ...selectedOption,
-        buyer: accountId, // Set the buyer to the current wallet
+        buyer: accountId,
+        nftSerial: serialNumber,
       };
 
       setPutOptions(updatedOptions);
@@ -261,6 +263,7 @@ function App() {
       await exerciseCallOptionFcn(
         walletData,
         selectedOption.token,
+        selectedOption.nftSerial,
         accountId,
         selectedOption.seller,
         selectedOption.strike,
@@ -304,10 +307,10 @@ function App() {
       return;
     }
 
-    if (selectedOption.buyer !== accountId) {
-      alert("You do not own this option.");
-      return;
-    }
+    // if (selectedOption.buyer !== accountId) {
+    //   alert("You do not own this option.");
+    //   return;
+    // }
 
     // Check if the option has expired
     const currentTime = new Date().toISOString();
@@ -321,6 +324,7 @@ function App() {
       await exercisePutOptionFcn(
         walletData,
         selectedOption.token,
+        selectedOption.nftSerial,
         accountId, // Buyer
         selectedOption.seller,
         selectedOption.strike,
