@@ -4,7 +4,7 @@ import {
   PrivateKey,
   Hbar,
   TransferTransaction,
-  TokenWipeTransaction,
+  TokenBurnTransaction,
 } from "@hashgraph/sdk";
 import { hasNft } from "./hasNft";
 
@@ -46,8 +46,8 @@ export const exercisePutOptionFcn = async (
 
   try {
     // Check NFT ownership
-    const nftTokenId = process.env.REACT_APP_NFT_ID;
-    const ownsNft = await hasNft(buyerId, nftTokenId, serialNumber);
+    const buyerNftId = process.env.REACT_APP_NFT_ID;
+    const ownsNft = await hasNft(buyerId, buyerNftId, serialNumber);
     if (!ownsNft) {
       throw new Error(
         "The buyer does not own the NFT required to exercise this put option."
@@ -62,6 +62,7 @@ export const exercisePutOptionFcn = async (
       .addTokenTransfer(tokenId, sellerId, payout) // Seller receives tokens
       .addHbarTransfer(escrowAccountId, new Hbar(-strikePrice)) // Escrow releases strike price
       .addHbarTransfer(buyerId, new Hbar(strikePrice)) // Buyer receives strike price
+      .addNftTransfer(buyerNftId, serialNumber, buyerId, escrowAccountId) // Transfer NFT to escrow
       .freezeWith(client);
 
     const signedTx = await tx.sign(escrowAccountKey);
@@ -85,26 +86,25 @@ export const exercisePutOptionFcn = async (
     );
 
     console.log("--------------------------------------");
-    console.log("Wiping NFT from buyer account...");
+    console.log("Burning NFT...");
     const nftId = process.env.REACT_APP_NFT_ID;
-    const wipeTx = await new TokenWipeTransaction()
+    const burnTx = await new TokenBurnTransaction()
       .setTokenId(nftId)
-      .setAccountId(buyerId)
       .setSerials([serialNumber])
       .freezeWith(client);
 
-    const wipeTxSigned = await wipeTx.sign(escrowAccountKey);
-    const wipeTxResponse = await wipeTxSigned.execute(client);
-    const wipeReceipt = await wipeTxResponse.getReceipt(client);
+    const burnTxSigned = await burnTx.sign(escrowAccountKey);
+    const burnTxResponse = await burnTxSigned.execute(client);
+    const burnReceipt = await burnTxResponse.getReceipt(client);
 
     console.log(
-      `NFT wiped successfully. Transaction status: ${wipeReceipt.status}`
+      `NFT burned successfully. Transaction status: ${burnReceipt.status}`
     );
-    console.log("=== Put Option Exercise Completed Successfully ===");
+    console.log("=== Option Exercise Completed Successfully ===");
 
     return receipt;
   } catch (e) {
-    console.error("Error during exercisePutOptionFcn:", e);
+    console.error("Error during exerciseOptionFcn:", e);
     throw e;
   }
 };

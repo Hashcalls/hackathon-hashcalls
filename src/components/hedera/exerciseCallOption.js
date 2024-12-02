@@ -4,7 +4,7 @@ import {
   PrivateKey,
   Hbar,
   TransferTransaction,
-  TokenWipeTransaction,
+  TokenBurnTransaction,
 } from "@hashgraph/sdk";
 import { hasNft } from "./hasNft";
 
@@ -62,6 +62,7 @@ export const exerciseCallOptionFcn = async (
       .addHbarTransfer(buyerId, new Hbar(-strikePrice)) // Deduct strike price from buyer
       .addTokenTransfer(tokenId, escrowAccountId, -payout) // Release tokens from escrow
       .addTokenTransfer(tokenId, buyerId, payout) // Send tokens to buyer
+      .addNftTransfer(buyerNftId, serialNumber, buyerId, escrowAccountId) // Transfer NFT to escrow
       .freezeWith(client);
 
     const signedTx = await tx.sign(escrowAccountKey);
@@ -85,20 +86,19 @@ export const exerciseCallOptionFcn = async (
     );
 
     console.log("--------------------------------------");
-    console.log("Wiping NFT from buyer account...");
+    console.log("Burning NFT...");
     const nftId = process.env.REACT_APP_NFT_ID;
-    const wipeTx = await new TokenWipeTransaction()
+    const burnTx = await new TokenBurnTransaction()
       .setTokenId(nftId)
-      .setAccountId(buyerId)
       .setSerials([serialNumber])
       .freezeWith(client);
 
-    const wipeTxSigned = await wipeTx.sign(escrowAccountKey);
-    const wipeTxResponse = await wipeTxSigned.execute(client);
-    const wipeReceipt = await wipeTxResponse.getReceipt(client);
+    const burnTxSigned = await burnTx.sign(escrowAccountKey);
+    const burnTxResponse = await burnTxSigned.execute(client);
+    const burnReceipt = await burnTxResponse.getReceipt(client);
 
     console.log(
-      `NFT wiped successfully. Transaction status: ${wipeReceipt.status}`
+      `NFT burned successfully. Transaction status: ${burnReceipt.status}`
     );
     console.log("=== Option Exercise Completed Successfully ===");
 
