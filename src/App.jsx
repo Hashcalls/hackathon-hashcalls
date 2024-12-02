@@ -7,6 +7,7 @@ import { exerciseCallOptionFcn } from "./components/hedera/exerciseCallOption.js
 import { exercisePutOptionFcn } from "./components/hedera/exercisePut.js";
 import { buyOptionFcn } from "./components/hedera/buyOption.js";
 import { writeCallFcn } from "./components/hedera/writeCall.js";
+import { writePutFcn } from "./components/hedera/writePut.js";
 
 function App() {
   // State for connected wallet
@@ -85,6 +86,7 @@ function App() {
   }
 
   async function addPutOption() {
+    const writerNftSerial = await writePutFcn(walletData, accountId, putStrike);
     const newPutOption = {
       token: putToken,
       amount: putAmount,
@@ -94,24 +96,8 @@ function App() {
       expiry: putExpiry,
       buyer: null,
       nftSerial: null,
-      writerNftSerial: null,
+      writerNftSerial: writerNftSerial,
     };
-
-    // Escrow the HBAR (strike price)
-    const senderAccountId = accountId; // Use the seller as the sender
-    try {
-      const txStatus = await sendHbarFcn(
-        walletData,
-        senderAccountId,
-        process.env.REACT_APP_ESCROW_ID, // Send HBAR to escrow account
-        putStrike
-      );
-      console.log(`- HBAR Escrow Transaction Status: ${txStatus}`);
-    } catch (error) {
-      console.error("Error during HBAR escrow transaction:", error);
-      alert("Failed to escrow HBAR for the put option. Please try again.");
-      return;
-    }
 
     // Update the Put Options State
     const updatedPutOptions = [...putOptions, newPutOption];
