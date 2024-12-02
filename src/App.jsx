@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import walletConnectFcn from "./components/hedera/walletConnect.js";
-import { sendHbarFcn } from "./components/hedera/hbarTransfer.js";
 import "./styles/App.css";
-import { tokenTransferFcn } from "./components/hedera/tokenTransfer.js";
 import { exerciseCallOptionFcn } from "./components/hedera/exerciseCallOption.js";
 import { exercisePutOptionFcn } from "./components/hedera/exercisePut.js";
 import { buyOptionFcn } from "./components/hedera/buyOption.js";
@@ -20,7 +18,6 @@ function App() {
   const [callOptions, setCallOptions] = useState([]);
   const [token, setToken] = useState("");
   const [amount, setAmount] = useState("");
-  const [seller, setSeller] = useState("");
   const [premium, setPremium] = useState("");
   const [strike, setStrike] = useState("");
   const [expiry, setExpiry] = useState("");
@@ -30,8 +27,7 @@ function App() {
   // States for Put Options
   const [putOptions, setPutOptions] = useState([]);
   const [putToken, setPutToken] = useState("");
-  const [putAmount, setPutAmount] = useState("");
-  const [putSeller, setPutSeller] = useState("");
+  const [putAmount, setPutAmount] = useState("");;
   const [putPremium, setPutPremium] = useState("");
   const [putStrike, setPutStrike] = useState("");
   const [putExpiry, setPutExpiry] = useState("");
@@ -59,7 +55,6 @@ function App() {
     const newCallOption = {
       token,
       amount,
-      seller: seller || accountId, // Use specified seller or default to connected wallet
       premium,
       strike,
       expiry,
@@ -82,7 +77,6 @@ function App() {
     setPremium("");
     setStrike("");
     setExpiry("");
-    setSeller(""); // Reset seller input
   }
 
   async function addPutOption() {
@@ -90,7 +84,6 @@ function App() {
     const newPutOption = {
       token: putToken,
       amount: putAmount,
-      seller: putSeller || accountId, // Use specified seller or default to connected wallet
       premium: putPremium,
       strike: putStrike,
       expiry: putExpiry,
@@ -112,7 +105,7 @@ function App() {
     setPutPremium("");
     setPutStrike("");
     setPutExpiry("");
-    setPutSeller(""); // Reset seller input
+
   }
 
   async function buyCallOption() {
@@ -392,18 +385,6 @@ function App() {
             onChange={(e) => setExpiry(e.target.value)}
           />
         </div>
-        <div>
-          <label htmlFor="seller">
-            Seller Account ID (optional: testing only):{" "}
-          </label>
-          <input
-            id="seller"
-            type="text"
-            value={seller}
-            onChange={(e) => setSeller(e.target.value)}
-            placeholder={accountId || "Connected wallet ID"}
-          />
-        </div>
         <button onClick={addCallOption}>Add Call Option</button>
       </div>
 
@@ -498,18 +479,6 @@ function App() {
             type="datetime-local"
             value={putExpiry}
             onChange={(e) => setPutExpiry(e.target.value)}
-          />
-        </div>
-        <div>
-          <label htmlFor="putSeller">
-            Seller Account ID (optional: testing only):{" "}
-          </label>
-          <input
-            id="putSeller"
-            type="text"
-            value={putSeller}
-            onChange={(e) => setPutSeller(e.target.value)}
-            placeholder={accountId || "Connected wallet ID"}
           />
         </div>
         <button onClick={addPutOption}>Add Put Option</button>
