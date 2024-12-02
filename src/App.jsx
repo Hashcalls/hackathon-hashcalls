@@ -134,8 +134,8 @@ function App() {
     const serialNumber = await buyOptionFcn(
       walletData,
       accountId,
-      selectedOption.seller,
-      selectedOption.premium
+      selectedOption.premium,
+      selectedOption.writerNftSerial
     );
     console.log(serialNumber);
 
@@ -176,8 +176,8 @@ function App() {
       const serialNumber = await buyOptionFcn(
         walletData,
         accountId,
-        selectedOption.seller,
-        selectedOption.premium
+        selectedOption.premium,
+        selectedOption.writerNftSerial
       );
       console.log("NFT Serial Number:", serialNumber);
 

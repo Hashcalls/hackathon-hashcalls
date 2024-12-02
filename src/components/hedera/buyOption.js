@@ -5,44 +5,58 @@ import {
   TransferTransaction,
   PrivateKey,
 } from "@hashgraph/sdk";
+import { hasNft } from "./hasNft";
 
 export async function buyOptionFcn(
   walletData,
-  senderAccountId,
-  receiverAccountId,
-  premium
+  optionBuyerId,
+  premium,
+  writerNftSerial
 ) {
   const escrowAccountId = process.env.REACT_APP_ESCROW_ID;
   const escrowAccountKey = process.env.REACT_APP_ESCROW_KEY;
   const k = PrivateKey.fromStringECDSA(escrowAccountKey);
-
-  const client = Client.forTestnet().setOperator(escrowAccountId, k);
+  const WRITER_NFT_ID = process.env.REACT_APP_WRITER_NFT_ID;
   const NFT_ID = process.env.REACT_APP_NFT_ID;
 
+  const client = Client.forTestnet().setOperator(escrowAccountId, k);
+
   try {
-    console.log("Minting NFT...");
+    console.log("\n=== Writer NFT Ownership Check ===");
+    console.log(`Checking Writer NFT Serial: ${writerNftSerial}`);
+    console.log(`Writer NFT Token ID: ${WRITER_NFT_ID}`);
+
+    // Get current writer NFT owner
+    const writerAccountId = await hasNft(null, WRITER_NFT_ID, writerNftSerial);
+    if (!writerAccountId) {
+      throw new Error("Could not find owner of writer NFT");
+    }
+    console.log(`Writer NFT Owner Found: ${writerAccountId}`);
+    console.log("================================\n");
+
+    console.log("=== Minting Option NFT ===");
+    console.log(`Option NFT Token ID: ${NFT_ID}`);
 
     // Mint a new NFT with metadata
     const mintTx = new TokenMintTransaction()
       .setTokenId(NFT_ID)
-      .addMetadata(Buffer.from("Unique Metadata for NFT")) // Metadata for the NFT
+      .addMetadata(Buffer.from("Option NFT"))
       .freezeWith(client);
 
-    // Sign and execute the mint transaction
     const mintTxSigned = await mintTx.sign(k);
     const mintTxResponse = await mintTxSigned.execute(client);
 
-    // Get the receipt and confirm the serial number
     const mintReceipt = await mintTxResponse.getReceipt(client);
-    const serialNumber = mintReceipt.serials[0].toNumber(); // Convert Long to number
-    console.log(
-      `- NFT minted successfully with serial number: ${serialNumber}`
-    );
+    const serialNumber = mintReceipt.serials[0].toNumber();
+    console.log(`Option NFT Minted - Serial Number: ${serialNumber}`);
+    console.log("=======================\n");
 
-    console.log(`\n=======================================`);
-    console.log(
-      `- Sending premium from ${senderAccountId} to ${receiverAccountId} and transferring NFT ${serialNumber} to ${senderAccountId}`
-    );
+    console.log("=== Premium Payment and NFT Transfer ===");
+    console.log(`Premium Amount: ${premium} HBAR`);
+    console.log(`From Buyer: ${optionBuyerId}`);
+    console.log(`To Writer: ${writerAccountId}`);
+    console.log(`Option NFT ID: ${NFT_ID}`);
+    console.log(`Option NFT Serial: ${serialNumber}`);
 
     const hashconnect = walletData[0];
     const saveData = walletData[1];
@@ -50,13 +64,15 @@ export async function buyOptionFcn(
     const provider = hashconnect.getProvider(
       "testnet",
       saveData.topic,
-      senderAccountId
+      optionBuyerId
     );
     const signer = hashconnect.getSigner(provider);
+
+    console.log("\nInitiating Transactions...");
     const transferTx = await new TransferTransaction()
-      .addHbarTransfer(senderAccountId, new Hbar(-premium))
-      .addHbarTransfer(receiverAccountId, new Hbar(premium))
-      .addNftTransfer(NFT_ID, serialNumber, escrowAccountId, senderAccountId)
+      .addHbarTransfer(optionBuyerId, new Hbar(-premium))
+      .addHbarTransfer(writerAccountId, new Hbar(premium))
+      .addNftTransfer(NFT_ID, serialNumber, escrowAccountId, optionBuyerId)
       .freezeWith(client);
 
     const signedTx = await transferTx.sign(k);
@@ -65,10 +81,15 @@ export async function buyOptionFcn(
       txResponse.transactionId
     );
 
-    console.log(`- Transaction status: ${receipt.status.toString()}`);
+    console.log(`Transaction Status: ${receipt.status.toString()}`);
+    console.log("Transaction Complete!");
+    console.log("====================================\n");
+
     return serialNumber;
   } catch (error) {
-    console.error("- Error during HBAR transfer:", error);
-    throw new Error(`HBAR transfer failed: ${error.message}`);
+    console.error("\n=== Error During Option Purchase ===");
+    console.error(`Error Details: ${error.message}`);
+    console.error("=================================\n");
+    throw new Error(`Option purchase failed: ${error.message}`);
   }
 }
