@@ -13,21 +13,24 @@ export const exercisePutOptionFcn = async (
   tokenId,
   serialNumber,
   buyerId,
-  sellerId,
   strikePrice,
-  payout
+  payout,
+  writerNftSerial
 ) => {
   const escrowAccountId = AccountId.fromString(process.env.REACT_APP_ESCROW_ID);
   const escrowAccountKey = PrivateKey.fromStringECDSA(
     process.env.REACT_APP_ESCROW_KEY
   );
 
+  const writerNftId = process.env.REACT_APP_WRITER_NFT_ID;
+  const writerAccountId = await hasNft(writerNftId, writerNftSerial);
+
   console.log("=== Exercise Put Option Process Started ===");
   console.log(`Token ID: ${tokenId}`);
   console.log(`Serial Number: ${serialNumber}`);
   console.log(`Amount of Tokens: ${payout}`);
   console.log(`Escrow Account ID: ${escrowAccountId.toString()}`);
-  console.log(`Option Seller ID: ${sellerId}`);
+  console.log(`Option Seller ID: ${writerAccountId}`);
   console.log(`Option Buyer ID: ${buyerId}`);
   console.log(`Strike Price (HBAR): ${strikePrice}`);
   console.log("--------------------------------------");
@@ -59,7 +62,7 @@ export const exercisePutOptionFcn = async (
 
     const tx = await new TransferTransaction()
       .addTokenTransfer(tokenId, buyerId, -payout) // Buyer sends tokens to the seller
-      .addTokenTransfer(tokenId, sellerId, payout) // Seller receives tokens
+      .addTokenTransfer(tokenId, writerAccountId, payout) // Seller receives tokens
       .addHbarTransfer(escrowAccountId, new Hbar(-strikePrice)) // Escrow releases strike price
       .addHbarTransfer(buyerId, new Hbar(strikePrice)) // Buyer receives strike price
       .addNftTransfer(buyerNftId, serialNumber, buyerId, escrowAccountId) // Transfer NFT to escrow
@@ -79,7 +82,7 @@ export const exercisePutOptionFcn = async (
     }
 
     console.log(
-      `${payout} tokens successfully transferred from Buyer (${buyerId}) to Seller (${sellerId}).`
+      `${payout} tokens successfully transferred from Buyer (${buyerId}) to Seller (${writerAccountId}).`
     );
     console.log(
       `${strikePrice} HBAR successfully transferred from Escrow (${escrowAccountId}) to Buyer (${buyerId}).`

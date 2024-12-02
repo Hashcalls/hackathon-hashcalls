@@ -248,9 +248,9 @@ function App() {
         selectedOption.token,
         selectedOption.nftSerial,
         accountId,
-        selectedOption.seller,
         selectedOption.strike,
-        selectedOption.amount
+        selectedOption.amount,
+        selectedOption.writerNftSerial
       );
 
       // Remove the exercised option from the state
@@ -309,9 +309,9 @@ function App() {
         selectedOption.token,
         selectedOption.nftSerial,
         accountId, // Buyer
-        selectedOption.seller,
         selectedOption.strike,
-        selectedOption.amount
+        selectedOption.amount,
+        selectedOption.writerNftSerial
       );
 
       // Remove the exercised option from the state

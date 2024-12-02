@@ -13,21 +13,23 @@ export const exerciseCallOptionFcn = async (
   tokenId,
   serialNumber,
   buyerId,
-  sellerId,
   strikePrice,
-  payout
+  payout,
+  writerNftSerial
 ) => {
   const escrowAccountId = AccountId.fromString(process.env.REACT_APP_ESCROW_ID);
   const escrowAccountKey = PrivateKey.fromStringECDSA(
     process.env.REACT_APP_ESCROW_KEY
   );
+  const writerNftId = process.env.REACT_APP_WRITER_NFT_ID;
+  const writerAccountId = await hasNft(writerNftId, writerNftSerial);
 
   console.log("=== Exercise Option Process Started ===");
   console.log(`Token ID: ${tokenId}`);
   console.log(`Serial Number: ${serialNumber}`);
   console.log(`Amount of Tokens: ${payout}`);
   console.log(`Escrow Account ID: ${escrowAccountId.toString()}`);
-  console.log(`Option Seller ID: ${sellerId}`);
+  console.log(`Option Seller ID: ${writerAccountId}`);
   console.log(`Option Buyer ID: ${buyerId}`);
   console.log(`Strike Price (HBAR): ${strikePrice}`);
   console.log("--------------------------------------");
@@ -58,7 +60,7 @@ export const exerciseCallOptionFcn = async (
     console.log("Creating combined transfer transaction...");
 
     const tx = await new TransferTransaction()
-      .addHbarTransfer(sellerId, new Hbar(strikePrice)) // Pay strike price to seller
+      .addHbarTransfer(writerAccountId, new Hbar(strikePrice)) // Pay strike price to seller
       .addHbarTransfer(buyerId, new Hbar(-strikePrice)) // Deduct strike price from buyer
       .addTokenTransfer(tokenId, escrowAccountId, -payout) // Release tokens from escrow
       .addTokenTransfer(tokenId, buyerId, payout) // Send tokens to buyer
@@ -82,7 +84,7 @@ export const exerciseCallOptionFcn = async (
       `${payout} tokens successfully transferred from Escrow (${escrowAccountId}) to Buyer (${buyerId}).`
     );
     console.log(
-      `${strikePrice} HBAR successfully transferred from Buyer (${buyerId}) to Seller (${sellerId}).`
+      `${strikePrice} HBAR successfully transferred from Buyer (${buyerId}) to Seller (${writerAccountId}).`
     );
 
     console.log("--------------------------------------");
