@@ -27,7 +27,7 @@ export async function buyOptionFcn(
     console.log(`Writer NFT Token ID: ${WRITER_NFT_ID}`);
 
     // Get current writer NFT owner
-    const writerAccountId = await hasNft(null, WRITER_NFT_ID, writerNftSerial);
+    const writerAccountId = await hasNft( WRITER_NFT_ID, writerNftSerial);
     if (!writerAccountId) {
       throw new Error("Could not find owner of writer NFT");
     }
