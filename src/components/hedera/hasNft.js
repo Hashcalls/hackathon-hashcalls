@@ -43,13 +43,9 @@ export async function hasNft(accountId, nftTokenId, serialNumber) {
     console.log(`NFT Owner: ${ownerAccountId}`);
     console.log(`Checking Account: ${accountId}`);
 
-    const ownsNft = ownerAccountId === accountId;
-    console.log(`Owns NFT: ${ownsNft}`);
-    console.log("===========================");
-
-    return ownsNft;
+    return ownerAccountId;
   } catch (error) {
     console.error("Error checking NFT ownership:", error);
-    return false;
+    return null;
   }
 }

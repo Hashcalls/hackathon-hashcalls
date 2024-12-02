@@ -47,8 +47,8 @@ export const exercisePutOptionFcn = async (
   try {
     // Check NFT ownership
     const buyerNftId = process.env.REACT_APP_NFT_ID;
-    const ownsNft = await hasNft(buyerId, buyerNftId, serialNumber);
-    if (!ownsNft) {
+    const nftOwner = await hasNft(buyerId, buyerNftId, serialNumber);
+    if (nftOwner !== buyerId) {
       throw new Error(
         "The buyer does not own the NFT required to exercise this put option."
       );
