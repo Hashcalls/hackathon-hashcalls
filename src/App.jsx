@@ -27,7 +27,7 @@ function App() {
   // States for Put Options
   const [putOptions, setPutOptions] = useState([]);
   const [putToken, setPutToken] = useState("");
-  const [putAmount, setPutAmount] = useState("");;
+  const [putAmount, setPutAmount] = useState("");
   const [putPremium, setPutPremium] = useState("");
   const [putStrike, setPutStrike] = useState("");
   const [putExpiry, setPutExpiry] = useState("");
@@ -51,14 +51,18 @@ function App() {
   }
 
   async function addCallOption() {
-    const writerNftSerial = await writeCallFcn(walletData, accountId, token, amount);
+    const writerNftSerial = await writeCallFcn(
+      walletData,
+      accountId,
+      token,
+      amount
+    );
     const newCallOption = {
       token,
       amount,
       premium,
       strike,
       expiry,
-      buyer: null,
       nftSerial: null,
       writerNftSerial: writerNftSerial,
     };
@@ -87,7 +91,6 @@ function App() {
       premium: putPremium,
       strike: putStrike,
       expiry: putExpiry,
-      buyer: null,
       nftSerial: null,
       writerNftSerial: writerNftSerial,
     };
@@ -105,7 +108,6 @@ function App() {
     setPutPremium("");
     setPutStrike("");
     setPutExpiry("");
-
   }
 
   async function buyCallOption() {
@@ -118,11 +120,11 @@ function App() {
     const selectedOption = callOptions[selectedCallIndexNum];
     console.log("Selected Option:", selectedOption);
 
-    if (selectedOption.buyer) {
-      console.log("This option is already owned by:", selectedOption.buyer);
-      alert("This option has already been purchased.");
-      return;
-    }
+    // if (selectedOption.buyer) {
+    //   console.log("This option is already owned by:", selectedOption.buyer);
+    //   alert("This option has already been purchased.");
+    //   return;
+    // }
 
     const serialNumber = await buyOptionFcn(
       walletData,
@@ -136,7 +138,6 @@ function App() {
     const updatedOptions = [...callOptions];
     updatedOptions[selectedCallIndexNum] = {
       ...selectedOption,
-      buyer: accountId, // Set the buyer to the current wallet
       nftSerial: serialNumber,
     };
 
@@ -159,11 +160,11 @@ function App() {
     const selectedOption = putOptions[selectedPutIndexNum];
     console.log("Selected Put Option:", selectedOption);
 
-    if (selectedOption.buyer) {
-      console.log("This put option is already owned by:", selectedOption.buyer);
-      alert("This put option has already been purchased.");
-      return;
-    }
+    // if (selectedOption.buyer) {
+    //   console.log("This put option is already owned by:", selectedOption.buyer);
+    //   alert("This put option has already been purchased.");
+    //   return;
+    // }
 
     try {
       const serialNumber = await buyOptionFcn(
@@ -178,7 +179,6 @@ function App() {
       const updatedOptions = [...putOptions];
       updatedOptions[selectedPutIndexNum] = {
         ...selectedOption,
-        buyer: accountId,
         nftSerial: serialNumber,
       };
 
@@ -222,10 +222,10 @@ function App() {
       return;
     }
 
-    if (selectedOption.buyer !== accountId) {
-      alert("You do not own this option.");
-      return;
-    }
+    // if (selectedOption.buyer !== accountId) {
+    //   alert("You do not own this option.");
+    //   return;
+    // }
 
     // Check if the option has expired
     const currentTime = new Date().toISOString();
@@ -420,7 +420,7 @@ function App() {
           >
             <option value="">-- Select an Option --</option>
             {callOptions
-              .filter((option) => option.buyer === accountId)
+              // .filter((option) => option.buyer === accountId)
               .map((option, index) => (
                 <option key={index} value={index}>
                   Option {index + 1} - Token: {option.token}, Amount:{" "}
@@ -515,7 +515,7 @@ function App() {
           >
             <option value="">-- Select an Option --</option>
             {putOptions
-              .filter((option) => option.buyer === accountId)
+              // .filter((option) => option.buyer === accountId)
               .map((option, index) => (
                 <option key={index} value={index}>
                   Put Option {index + 1} - Token: {option.token}, Amount:{" "}
