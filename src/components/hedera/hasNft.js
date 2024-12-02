@@ -7,12 +7,11 @@ import {
   NftId,
 } from "@hashgraph/sdk";
 
-export async function hasNft(accountId, serialNumber) {
+export async function hasNft(nftTokenId, serialNumber) {
   const escrowAccountId = AccountId.fromString(process.env.REACT_APP_ESCROW_ID);
   const escrowAccountKey = PrivateKey.fromStringECDSA(
     process.env.REACT_APP_ESCROW_KEY
   );
-  const tokenId = process.env.REACT_APP_NFT_ID;
 
   const client = Client.forTestnet().setOperator(
     escrowAccountId,
@@ -21,16 +20,15 @@ export async function hasNft(accountId, serialNumber) {
 
   try {
     console.log("=== Checking NFT Ownership ===");
-    console.log(`Account ID: ${accountId}`);
-    console.log(`Token ID: ${tokenId}`);
-    console.log(`Serial Number: ${serialNumber}`);
+    // console.log(`Token ID: ${nftTokenId}`);
+    // console.log(`Serial Number: ${serialNumber}`);
 
-    // Convert tokenId string to TokenId object
-    const tokenIdObj = TokenId.fromString(tokenId);
-    console.log(`Token ID Object: ${tokenIdObj.toString()}`);
+    // Convert nftTokenId string to nftTokenId object
+    const nftTokenIdObj = TokenId.fromString(nftTokenId);
+    // console.log(`Token ID Object: ${nftTokenIdObj.toString()}`);
 
-    // Create NftId from TokenId and serial number
-    const nftId = new NftId(tokenIdObj, serialNumber);
+    // Create NftId from nftTokenIdObj and serial number
+    const nftId = new NftId(nftTokenIdObj, serialNumber);
     console.log(`NFT ID: ${nftId.toString()}`);
 
     // Query NFT info
@@ -38,19 +36,16 @@ export async function hasNft(accountId, serialNumber) {
       .setNftId(nftId)
       .execute(client);
 
-    console.log(`NFT Info: ${JSON.stringify(nftInfo)}`);
+    // console.log(`NFT Info: ${JSON.stringify(nftInfo)}`);
 
     const ownerAccountId = nftInfo[0].accountId.toString();
-    console.log(`NFT Owner: ${ownerAccountId}`);
-    console.log(`Checking Account: ${accountId}`);
+    console.log(
+      `HASNFT CHECK: NFT Owner of NFT ID ${nftId} serial ${serialNumber}: ${ownerAccountId}`
+    );
 
-    const ownsNft = ownerAccountId === accountId;
-    console.log(`Owns NFT: ${ownsNft}`);
-    console.log("===========================");
-
-    return ownsNft;
+    return ownerAccountId;
   } catch (error) {
     console.error("Error checking NFT ownership:", error);
-    return false;
+    return null;
   }
 }

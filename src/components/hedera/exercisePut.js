@@ -4,7 +4,8 @@ import {
   PrivateKey,
   Hbar,
   TransferTransaction,
-  TokenWipeTransaction,
+  TokenBurnTransaction,
+  TokenWipeTransaction
 } from "@hashgraph/sdk";
 import { hasNft } from "./hasNft";
 
@@ -13,21 +14,25 @@ export const exercisePutOptionFcn = async (
   tokenId,
   serialNumber,
   buyerId,
-  sellerId,
   strikePrice,
-  payout
+  payout,
+  writerNftSerial
 ) => {
   const escrowAccountId = AccountId.fromString(process.env.REACT_APP_ESCROW_ID);
   const escrowAccountKey = PrivateKey.fromStringECDSA(
     process.env.REACT_APP_ESCROW_KEY
   );
 
+  const writerNftId = process.env.REACT_APP_WRITER_NFT_ID;
+  const writerAccountId = await hasNft(writerNftId, writerNftSerial);
+  console.log(`Writer NFT Owner: ${writerAccountId}`);
+
   console.log("=== Exercise Put Option Process Started ===");
   console.log(`Token ID: ${tokenId}`);
-  console.log(`Serial Number: ${serialNumber}`);
+  console.log(`Buyer Serial Number: ${serialNumber}`);
   console.log(`Amount of Tokens: ${payout}`);
   console.log(`Escrow Account ID: ${escrowAccountId.toString()}`);
-  console.log(`Option Seller ID: ${sellerId}`);
+  console.log(`Option Seller ID: ${writerAccountId}`);
   console.log(`Option Buyer ID: ${buyerId}`);
   console.log(`Strike Price (HBAR): ${strikePrice}`);
   console.log("--------------------------------------");
@@ -46,21 +51,25 @@ export const exercisePutOptionFcn = async (
 
   try {
     // Check NFT ownership
-    const ownsNft = await hasNft(buyerId, serialNumber);
-    if (!ownsNft) {
+    const buyerNftId = process.env.REACT_APP_NFT_ID;
+    const nftOwner = await hasNft( buyerNftId, serialNumber);
+    if (nftOwner !== buyerId) {
       throw new Error(
         "The buyer does not own the NFT required to exercise this put option."
       );
     }
+
+    console.log(`Buyer NFT owner: ${nftOwner}`);
 
     // Step 1: Create the combined transaction
     console.log("Creating combined transfer transaction...");
 
     const tx = await new TransferTransaction()
       .addTokenTransfer(tokenId, buyerId, -payout) // Buyer sends tokens to the seller
-      .addTokenTransfer(tokenId, sellerId, payout) // Seller receives tokens
+      .addTokenTransfer(tokenId, writerAccountId, payout) // Seller receives tokens
       .addHbarTransfer(escrowAccountId, new Hbar(-strikePrice)) // Escrow releases strike price
       .addHbarTransfer(buyerId, new Hbar(strikePrice)) // Buyer receives strike price
+      .addNftTransfer(buyerNftId, serialNumber, buyerId, escrowAccountId) // Transfer NFT to escrow
       .freezeWith(client);
 
     const signedTx = await tx.sign(escrowAccountKey);
@@ -77,19 +86,40 @@ export const exercisePutOptionFcn = async (
     }
 
     console.log(
-      `${payout} tokens successfully transferred from Buyer (${buyerId}) to Seller (${sellerId}).`
+      `${payout} tokens successfully transferred from Buyer (${buyerId}) to Seller (${writerAccountId}).`
     );
     console.log(
       `${strikePrice} HBAR successfully transferred from Escrow (${escrowAccountId}) to Buyer (${buyerId}).`
     );
 
     console.log("--------------------------------------");
-    console.log("Wiping NFT from buyer account...");
+    console.log("Burning NFT...");
     const nftId = process.env.REACT_APP_NFT_ID;
-    const wipeTx = await new TokenWipeTransaction()
+    const burnTx = await new TokenBurnTransaction()
       .setTokenId(nftId)
-      .setAccountId(buyerId)
       .setSerials([serialNumber])
+      .freezeWith(client);
+
+    const burnTxSigned = await burnTx.sign(escrowAccountKey);
+    const burnTxResponse = await burnTxSigned.execute(client);
+    const burnReceipt = await burnTxResponse.getReceipt(client);
+
+    console.log(
+      `NFT burned successfully. Transaction status: ${burnReceipt.status}`
+    );
+    console.log("=== Option Exercise Completed Successfully ===");
+
+    // Add writer NFT wipe
+    console.log("--------------------------------------");
+    console.log("Wiping Writer NFT...");
+    console.log(`Token ID: ${writerNftId}`);
+    console.log(`Serial Number: ${writerNftSerial}`);
+    console.log(`Account to wipe: ${writerAccountId}`);
+
+    const wipeTx = await new TokenWipeTransaction()
+      .setTokenId(writerNftId)
+      .setAccountId(writerAccountId)
+      .setSerials([writerNftSerial])
       .freezeWith(client);
 
     const wipeTxSigned = await wipeTx.sign(escrowAccountKey);
@@ -97,13 +127,15 @@ export const exercisePutOptionFcn = async (
     const wipeReceipt = await wipeTxResponse.getReceipt(client);
 
     console.log(
-      `NFT wiped successfully. Transaction status: ${wipeReceipt.status}`
+      `Writer NFT wiped successfully. Transaction status: ${wipeReceipt.status}`
     );
-    console.log("=== Put Option Exercise Completed Successfully ===");
+    console.log("=== Option Exercise Completed Successfully ===");
 
     return receipt;
   } catch (e) {
-    console.error("Error during exercisePutOptionFcn:", e);
+    console.error("Error during exerciseOptionFcn:", e);
     throw e;
   }
+
+  // TODO: Wipe writer NFT and test
 };
