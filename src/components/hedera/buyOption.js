@@ -17,29 +17,22 @@ export async function buyOptionFcn(
   const escrowAccountKey = process.env.REACT_APP_ESCROW_KEY;
   const k = PrivateKey.fromStringECDSA(escrowAccountKey);
   const WRITER_NFT_ID = process.env.REACT_APP_WRITER_NFT_ID;
-  const NFT_ID = process.env.REACT_APP_NFT_ID;
+  const BUYER_NFT_ID = process.env.REACT_APP_NFT_ID;
 
   const client = Client.forTestnet().setOperator(escrowAccountId, k);
 
   try {
-    console.log("\n=== Writer NFT Ownership Check ===");
-    console.log(`Checking Writer NFT Serial: ${writerNftSerial}`);
-    console.log(`Writer NFT Token ID: ${WRITER_NFT_ID}`);
-
     // Get current writer NFT owner
-    const writerAccountId = await hasNft( WRITER_NFT_ID, writerNftSerial);
+    const writerAccountId = await hasNft(WRITER_NFT_ID, writerNftSerial);
     if (!writerAccountId) {
       throw new Error("Could not find owner of writer NFT");
     }
-    console.log(`Writer NFT Owner Found: ${writerAccountId}`);
-    console.log("================================\n");
 
-    console.log("=== Minting Option NFT ===");
-    console.log(`Option NFT Token ID: ${NFT_ID}`);
+    console.log("=== Option Buy Initiated ===");
 
     // Mint a new NFT with metadata
     const mintTx = new TokenMintTransaction()
-      .setTokenId(NFT_ID)
+      .setTokenId(BUYER_NFT_ID)
       .addMetadata(Buffer.from("Option NFT"))
       .freezeWith(client);
 
@@ -48,15 +41,17 @@ export async function buyOptionFcn(
 
     const mintReceipt = await mintTxResponse.getReceipt(client);
     const serialNumber = mintReceipt.serials[0].toNumber();
-    console.log(`Option NFT Minted - Serial Number: ${serialNumber}`);
+    console.log(`Option Buyer NFT Minted - Serial Number: ${serialNumber}`);
     console.log("=======================\n");
 
-    console.log("=== Premium Payment and NFT Transfer ===");
+    console.log("=== Premium Payment and NFT Transfer Initated ===");
     console.log(`Premium Amount: ${premium} HBAR`);
-    console.log(`From Buyer: ${optionBuyerId}`);
-    console.log(`To Writer: ${writerAccountId}`);
-    console.log(`Option NFT ID: ${NFT_ID}`);
-    console.log(`Option NFT Serial: ${serialNumber}`);
+    console.log(
+      `From Buyer: ${optionBuyerId} , new owner of buyer NFT ID ${BUYER_NFT_ID} serial ${serialNumber}`
+    );
+    console.log(
+      `To Writer: ${writerAccountId}, owner of writer NFT ID ${WRITER_NFT_ID} serial ${writerNftSerial}`
+    );
 
     const hashconnect = walletData[0];
     const saveData = walletData[1];
@@ -72,7 +67,12 @@ export async function buyOptionFcn(
     const transferTx = await new TransferTransaction()
       .addHbarTransfer(optionBuyerId, new Hbar(-premium))
       .addHbarTransfer(writerAccountId, new Hbar(premium))
-      .addNftTransfer(NFT_ID, serialNumber, escrowAccountId, optionBuyerId)
+      .addNftTransfer(
+        BUYER_NFT_ID,
+        serialNumber,
+        escrowAccountId,
+        optionBuyerId
+      )
       .freezeWith(client);
 
     const signedTx = await transferTx.sign(k);
@@ -82,7 +82,7 @@ export async function buyOptionFcn(
     );
 
     console.log(`Transaction Status: ${receipt.status.toString()}`);
-    console.log("Transaction Complete!");
+    console.log("Option Buy Complete!");
     console.log("====================================\n");
 
     return serialNumber;
