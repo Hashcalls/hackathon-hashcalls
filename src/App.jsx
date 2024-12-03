@@ -50,7 +50,7 @@ function App() {
       premium,
       strike,
       expiry,
-      nftSerial: null,
+      buyerNftSerial: null,
       writerNftSerial,
       isCall,
     };
@@ -88,7 +88,7 @@ function App() {
     const updatedOptions = [...options];
     updatedOptions[index] = {
       ...selectedOption,
-      nftSerial: serialNumber,
+      buyerNftSerial: serialNumber,
     };
 
     setOptions(updatedOptions);
@@ -115,7 +115,7 @@ function App() {
               await exerciseOptionFcn(
           walletData,
           selectedOption.token,
-          selectedOption.nftSerial,
+          selectedOption.buyerNftSerial,
           accountId,
           selectedOption.strike,
           selectedOption.amount,
@@ -123,29 +123,7 @@ function App() {
           isCall
         );
 
-      // if (selectedOption.isCall) {
-      //   await exerciseCallOptionFcn(
-      //     walletData,
-      //     selectedOption.token,
-      //     selectedOption.nftSerial,
-      //     accountId,
-      //     selectedOption.strike,
-      //     selectedOption.amount,
-      //     selectedOption.writerNftSerial,
-      //     isCall
-      //   );
-      // } else {
-      //   await exercisePutOptionFcn(
-      //     walletData,
-      //     selectedOption.token,
-      //     selectedOption.nftSerial,
-      //     accountId,
-      //     selectedOption.strike,
-      //     selectedOption.amount,
-      //     selectedOption.writerNftSerial
-      //   );
-      // }
-
+     
       const updatedOptions = options.filter((_, idx) => idx !== index);
       setOptions(updatedOptions);
 

@@ -16,19 +16,13 @@ export async function writeOptionFcn(
   isCall
 ) {
   const escrowAccountId = AccountId.fromString(process.env.REACT_APP_ESCROW_ID);
-  const escrowAccountKey = PrivateKey.fromStringECDSA(
-    process.env.REACT_APP_ESCROW_KEY
-  );
+  const k = PrivateKey.fromStringECDSA(process.env.REACT_APP_ESCROW_KEY);
   const WRITER_NFT_ID = process.env.REACT_APP_WRITER_NFT_ID;
 
-  const client = Client.forTestnet().setOperator(
-    escrowAccountId,
-    escrowAccountKey
-  );
+  const client = Client.forTestnet().setOperator(escrowAccountId, k);
 
   try {
     console.log("Minting Writer NFT...");
-    console.log(`Writer Account: ${writerAccountId}`);
 
     // Mint NFT
     const mintTx = new TokenMintTransaction()
@@ -36,12 +30,14 @@ export async function writeOptionFcn(
       .addMetadata(Buffer.from("Writer NFT"))
       .freezeWith(client);
 
-    const mintTxSigned = await mintTx.sign(escrowAccountKey);
+    const mintTxSigned = await mintTx.sign(k);
     const mintTxResponse = await mintTxSigned.execute(client);
     const mintReceipt = await mintTxResponse.getReceipt(client);
     const serialNumber = mintReceipt.serials[0].toNumber();
 
-    console.log(`- Writer NFT minted with serial number: ${serialNumber}`);
+    console.log(
+      `- Writer NFT ID ${WRITER_NFT_ID} minted with serial number: ${serialNumber}`
+    );
     console.log(`\n=======================================`);
 
     // Transfer to writer
@@ -67,6 +63,13 @@ export async function writeOptionFcn(
         .addTokenTransfer(tokenId, writerAccountId, -amount)
         .addTokenTransfer(tokenId, escrowAccountId, amount)
         .freezeWith(client);
+      console.log("=== Call Option Writing Initiated ===");
+      console.log(
+        `- Call option writer ${writerAccountId} transferred ${amount} of token ${tokenId} to escrow ${escrowAccountId}`
+      );
+      console.log(
+        `Transferred Writer NFT ID ${WRITER_NFT_ID} serial ${serialNumber} to writer ${writerAccountId}`
+      );
     } else {
       transferTx = await new TransferTransaction()
         .addNftTransfer(
@@ -78,9 +81,16 @@ export async function writeOptionFcn(
         .addHbarTransfer(writerAccountId, new Hbar(-strikePrice))
         .addHbarTransfer(escrowAccountId, new Hbar(strikePrice))
         .freezeWith(client);
+      console.log("=== Put Option Writing Initiated ===");
+      console.log(
+        `- Put option writer ${writerAccountId} transferred ${strikePrice} HBAR to escrow ${escrowAccountId}`
+      );
+      console.log(
+        `Transferred Writer NFT ID ${WRITER_NFT_ID} serial ${serialNumber} to writer ${writerAccountId}`
+      );
     }
 
-    const signedTx = await transferTx.sign(escrowAccountKey);
+    const signedTx = await transferTx.sign(k);
     const txResponse = await signedTx.executeWithSigner(signer);
     const receipt = await provider.getTransactionReceipt(
       txResponse.transactionId
