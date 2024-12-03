@@ -4,8 +4,8 @@ import "./styles/App.css";
 import { exerciseCallOptionFcn } from "./components/hedera/exerciseCallOption.js";
 import { exercisePutOptionFcn } from "./components/hedera/exercisePut.js";
 import { buyOptionFcn } from "./components/hedera/buyOption.js";
-import { writeCallFcn } from "./components/hedera/writeCall.js";
-import { writePutFcn } from "./components/hedera/writePut.js";
+import { writeOptionFcn } from "./components/hedera/writeOption.js";
+
 
 function App() {
   // State for connected wallet
@@ -42,9 +42,8 @@ function App() {
   }
 
   async function addOption() {
-    const writerNftSerial = isCall
-      ? await writeCallFcn(walletData, accountId, token, amount)
-      : await writePutFcn(walletData, accountId, strike);
+
+    const writerNftSerial = await writeOptionFcn(walletData, accountId, token, amount, strike, isCall);
 
     const newOption = {
       token,

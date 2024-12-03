@@ -4,13 +4,16 @@ import {
   TransferTransaction,
   PrivateKey,
   AccountId,
+  Hbar,
 } from "@hashgraph/sdk";
 
-export async function writeCallFcn(
+export async function writeOptionFcn(
   walletData,
   writerAccountId,
   tokenId,
-  amount
+  amount,
+  strikePrice,
+  isCall
 ) {
   const escrowAccountId = AccountId.fromString(process.env.REACT_APP_ESCROW_ID);
   const escrowAccountKey = PrivateKey.fromStringECDSA(
@@ -51,16 +54,31 @@ export async function writeCallFcn(
     );
     const signer = hashconnect.getSigner(provider);
 
-    const transferTx = await new TransferTransaction()
-      .addNftTransfer(
-        WRITER_NFT_ID,
-        serialNumber,
-        escrowAccountId.toString(),
-        writerAccountId
-      )
-      .addTokenTransfer(tokenId, writerAccountId, -amount)
-      .addTokenTransfer(tokenId, escrowAccountId, amount)
-      .freezeWith(client);
+    let transferTx;
+
+    if (isCall) {
+      transferTx = await new TransferTransaction()
+        .addNftTransfer(
+          WRITER_NFT_ID,
+          serialNumber,
+          escrowAccountId.toString(),
+          writerAccountId
+        )
+        .addTokenTransfer(tokenId, writerAccountId, -amount)
+        .addTokenTransfer(tokenId, escrowAccountId, amount)
+        .freezeWith(client);
+    } else {
+      transferTx = await new TransferTransaction()
+        .addNftTransfer(
+          WRITER_NFT_ID,
+          serialNumber,
+          escrowAccountId.toString(),
+          writerAccountId
+        )
+        .addHbarTransfer(writerAccountId, new Hbar(-strikePrice))
+        .addHbarTransfer(escrowAccountId, new Hbar(strikePrice))
+        .freezeWith(client);
+    }
 
     const signedTx = await transferTx.sign(escrowAccountKey);
     const txResponse = await signedTx.executeWithSigner(signer);
