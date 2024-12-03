@@ -1,10 +1,9 @@
 import React, { useState } from "react";
 import walletConnectFcn from "./components/hedera/walletConnect.js";
 import "./styles/App.css";
-import { exerciseCallOptionFcn } from "./components/hedera/exerciseCallOption.js";
-import { exercisePutOptionFcn } from "./components/hedera/exercisePut.js";
 import { buyOptionFcn } from "./components/hedera/buyOption.js";
 import { writeOptionFcn } from "./components/hedera/writeOption.js";
+import { exerciseOptionFcn } from "./components/hedera/exerciseOption.js";
 
 
 function App() {
@@ -113,27 +112,39 @@ function App() {
     }
 
     try {
-      if (selectedOption.isCall) {
-        await exerciseCallOptionFcn(
+              await exerciseOptionFcn(
           walletData,
           selectedOption.token,
           selectedOption.nftSerial,
           accountId,
           selectedOption.strike,
           selectedOption.amount,
-          selectedOption.writerNftSerial
+          selectedOption.writerNftSerial,
+          isCall
         );
-      } else {
-        await exercisePutOptionFcn(
-          walletData,
-          selectedOption.token,
-          selectedOption.nftSerial,
-          accountId,
-          selectedOption.strike,
-          selectedOption.amount,
-          selectedOption.writerNftSerial
-        );
-      }
+
+      // if (selectedOption.isCall) {
+      //   await exerciseCallOptionFcn(
+      //     walletData,
+      //     selectedOption.token,
+      //     selectedOption.nftSerial,
+      //     accountId,
+      //     selectedOption.strike,
+      //     selectedOption.amount,
+      //     selectedOption.writerNftSerial,
+      //     isCall
+      //   );
+      // } else {
+      //   await exercisePutOptionFcn(
+      //     walletData,
+      //     selectedOption.token,
+      //     selectedOption.nftSerial,
+      //     accountId,
+      //     selectedOption.strike,
+      //     selectedOption.amount,
+      //     selectedOption.writerNftSerial
+      //   );
+      // }
 
       const updatedOptions = options.filter((_, idx) => idx !== index);
       setOptions(updatedOptions);
