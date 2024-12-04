@@ -9,6 +9,23 @@ import {
 } from "@hashgraph/sdk";
 import { hasNft } from "./hasNft";
 
+// Global variables
+const escrowAccountId = AccountId.fromString(process.env.REACT_APP_ESCROW_ID);
+const k = PrivateKey.fromStringECDSA(
+  process.env.REACT_APP_ESCROW_KEY
+);
+const writerNftId = process.env.REACT_APP_WRITER_NFT_ID;
+const writerAccountId = await hasNft(writerNftId, writerNftSerial);
+const client = Client.forTestnet().setOperator(
+  escrowAccountId,
+  k
+);
+const hashconnect = walletData[0];
+const saveData = walletData[1];
+const provider = hashconnect.getProvider("testnet", saveData.topic, buyerId);
+const signer = hashconnect.getSigner(provider);
+
+
 export const handler = async (event, walletData, tokenId, buyerNftSerial, buyerId, strikePrice, payout, writerNftSerial, isCall) => {
   if (event.requestContext) {
     // Preflight request handling for CORS.
@@ -17,32 +34,10 @@ export const handler = async (event, walletData, tokenId, buyerNftSerial, buyerI
     } else if (event.requestContext.http.method !== 'POST') { // Require POST.
       return createResponse(405, 'Method Not Allowed', 'POST method is required.', {});
     }
-
-    // Validate x-api-key header.
-    if (event.headers['x-api-key'] !== process.env.X_API_KEY) {
-      return createResponse(403, 'Forbidden', 'Invalid or missing x-api-key header.', {});
-    }
   }
 
 
-  const escrowAccountId = AccountId.fromString(process.env.REACT_APP_ESCROW_ID);
-  const k = PrivateKey.fromStringECDSA(
-    process.env.REACT_APP_ESCROW_KEY
-  );
-  const writerNftId = process.env.REACT_APP_WRITER_NFT_ID;
-  const writerAccountId = await hasNft(writerNftId, writerNftSerial);
-
-  const client = Client.forTestnet().setOperator(
-    escrowAccountId,
-    k
-  );
-
-  const hashconnect = walletData[0];
-  const saveData = walletData[1];
-
-  const provider = hashconnect.getProvider("testnet", saveData.topic, buyerId);
-  const signer = hashconnect.getSigner(provider);
-
+  // Check if the buyer has enough funds to purchase the option
   try {
     // Check NFT ownership
     const buyerNftId = process.env.REACT_APP_NFT_ID;

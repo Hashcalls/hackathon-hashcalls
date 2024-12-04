@@ -24,11 +24,6 @@ export const handler = async (event, walletData, optionBuyerId, premium, writerN
     } else if (event.requestContext.http.method !== 'POST') { // Require POST.
       return createResponse(405, 'Method Not Allowed', 'POST method is required.', {});
     }
-
-    // Validate x-api-key header.
-    if (event.headers['x-api-key'] !== process.env.X_API_KEY) {
-      return createResponse(403, 'Forbidden', 'Invalid or missing x-api-key header.', {});
-    }
   }
 
 

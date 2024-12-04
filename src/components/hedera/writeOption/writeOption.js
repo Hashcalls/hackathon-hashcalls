@@ -7,20 +7,26 @@ import {
   Hbar,
 } from "@hashgraph/sdk";
 
-export async function writeOptionFcn(
-  walletData,
-  writerAccountId,
-  tokenId,
-  amount,
-  strikePrice,
-  isCall
-) {
-  const escrowAccountId = AccountId.fromString(process.env.REACT_APP_ESCROW_ID);
-  const k = PrivateKey.fromStringECDSA(process.env.REACT_APP_ESCROW_KEY);
-  const WRITER_NFT_ID = process.env.REACT_APP_WRITER_NFT_ID;
 
-  const client = Client.forTestnet().setOperator(escrowAccountId, k);
+// Global variables
+const escrowAccountId = AccountId.fromString(process.env.REACT_APP_ESCROW_ID);
+const k = PrivateKey.fromStringECDSA(process.env.REACT_APP_ESCROW_KEY);
+const WRITER_NFT_ID = process.env.REACT_APP_WRITER_NFT_ID;
+const client = Client.forTestnet().setOperator(escrowAccountId, k);
 
+
+export const handler = async (event, walletData, writerAccountId, tokenId, amount, strikePrice, isCall) => {
+  if (event.requestContext) {
+    // Preflight request handling for CORS.
+    if (event.requestContext.http.method === 'OPTIONS') {
+      return createResponse(204, 'No Content', 'Preflight request.', {});
+    } else if (event.requestContext.http.method !== 'POST') { // Require POST.
+      return createResponse(405, 'Method Not Allowed', 'POST method is required.', {});
+    }
+  }
+
+
+  // Check if the buyer has enough funds to purchase the option
   try {
     console.log("Minting Writer NFT...");
 
@@ -38,7 +44,6 @@ export async function writeOptionFcn(
     console.log(
       `- Writer NFT ID ${WRITER_NFT_ID} minted with serial number: ${serialNumber}`
     );
-    console.log(`\n=======================================`);
 
     // Transfer to writer
     const hashconnect = walletData[0];
@@ -63,13 +68,10 @@ export async function writeOptionFcn(
         .addTokenTransfer(tokenId, writerAccountId, -amount)
         .addTokenTransfer(tokenId, escrowAccountId, amount)
         .freezeWith(client);
-      console.log("=== Call Option Writing Initiated ===");
       console.log(
-        `- Call option writer ${writerAccountId} transferred ${amount} of token ${tokenId} to escrow ${escrowAccountId}`
+        `- Call option writer ${writerAccountId} transferred ${amount} of token ${tokenId} to escrow ${escrowAccountId} - Transferred Writer NFT ID ${WRITER_NFT_ID} serial ${serialNumber} to writer ${writerAccountId}`
       );
-      console.log(
-        `Transferred Writer NFT ID ${WRITER_NFT_ID} serial ${serialNumber} to writer ${writerAccountId}`
-      );
+
     } else {
       transferTx = await new TransferTransaction()
         .addNftTransfer(
@@ -81,12 +83,8 @@ export async function writeOptionFcn(
         .addHbarTransfer(writerAccountId, new Hbar(-strikePrice))
         .addHbarTransfer(escrowAccountId, new Hbar(strikePrice))
         .freezeWith(client);
-      console.log("=== Put Option Writing Initiated ===");
       console.log(
-        `- Put option writer ${writerAccountId} transferred ${strikePrice} HBAR to escrow ${escrowAccountId}`
-      );
-      console.log(
-        `Transferred Writer NFT ID ${WRITER_NFT_ID} serial ${serialNumber} to writer ${writerAccountId}`
+        `- Put option writer ${writerAccountId} transferred ${strikePrice} HBAR to escrow ${escrowAccountId} - Transferred Writer NFT ID ${WRITER_NFT_ID} serial ${serialNumber} to writer ${writerAccountId}`
       );
     }
 
@@ -96,10 +94,32 @@ export async function writeOptionFcn(
       txResponse.transactionId
     );
 
-    console.log(`- Transfer status: ${receipt.status.toString()}`);
-    return serialNumber;
+    return createResponse(200, "Success", "Writer NFT minted and transferred.", {
+      serialNumber,
+      receipt
+    });
+
   } catch (error) {
-    console.error("- Error during Writer NFT operation:", error);
-    throw new Error(`Writer NFT operation failed: ${error.message}`);
+    return createResponse(500, "Internal Server Error", error);
   }
 }
+
+
+// Create response.
+const createResponse = (statusCode, statusDescription, message, data) => {
+  const response = {
+    statusCode,
+    statusDescription,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      message,
+      data
+    })
+  };
+
+  statusCode === 200 ? console.log('RESPONSE:', response) : console.error('RESPONSE:', response);
+
+  return response;
+};

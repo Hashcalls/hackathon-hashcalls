@@ -1,8 +1,15 @@
 import { HashConnect } from "hashconnect";
 
-async function walletConnectFcn() {
-	console.log(`\n=======================================`);
-	console.log("- Connecting wallet...");
+export const handler = async (event) => {
+	if (event.requestContext) {
+		// Preflight request handling for CORS.
+		if (event.requestContext.http.method === 'OPTIONS') {
+			return createResponse(204, 'No Content', 'Preflight request.', {});
+		} else if (event.requestContext.http.method !== 'POST') { // Require POST.
+			return createResponse(405, 'Method Not Allowed', 'POST method is required.', {});
+		}
+	}
+
 
 	let saveData = {
 		topic: "",
@@ -36,6 +43,24 @@ async function walletConnectFcn() {
 	hashconnect.connectToLocalWallet(saveData.pairingString);
 
 	return [hashconnect, saveData];
-}
+};
 
-export default walletConnectFcn;
+
+// Create response.
+const createResponse = (statusCode, statusDescription, message, data) => {
+	const response = {
+		statusCode,
+		statusDescription,
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({
+			message,
+			data
+		})
+	};
+
+	statusCode === 200 ? console.log('RESPONSE:', response) : console.error('RESPONSE:', response);
+
+	return response;
+};
