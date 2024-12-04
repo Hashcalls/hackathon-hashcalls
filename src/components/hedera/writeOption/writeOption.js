@@ -15,7 +15,7 @@ const WRITER_NFT_ID = process.env.REACT_APP_WRITER_NFT_ID;
 const client = Client.forTestnet().setOperator(escrowAccountId, k);
 
 
-export const handler = async (event, walletData, writerAccountId, tokenId, amount, strikePrice, isCall) => {
+export const handler = async (event) => {
   if (event.requestContext) {
     // Preflight request handling for CORS.
     if (event.requestContext.http.method === 'OPTIONS') {
@@ -23,6 +23,27 @@ export const handler = async (event, walletData, writerAccountId, tokenId, amoun
     } else if (event.requestContext.http.method !== 'POST') { // Require POST.
       return createResponse(405, 'Method Not Allowed', 'POST method is required.', {});
     }
+  }
+
+
+  // Take in body params
+  let walletData, writerAccountId, tokenId, amount, strikePrice, isCall;
+  try {
+    const body = JSON.parse(event.body);
+
+    if (!body.writerAccountId || !body.tokenId || !body.amount || !body.strikePrice || !body.isCall || !body.walletData) {
+      throw new Error("Missing required parameters.");
+    }
+
+    writerAccountId = body.writerAccountId;
+    tokenId = body.tokenId;
+    amount = body.amount;
+    strikePrice = body.strikePrice;
+    isCall = body.isCall;
+    walletData = body.walletData;
+
+  } catch (error) {
+    return createResponse(400, 'Bad Request', 'Error parsing request body.', error);
   }
 
 

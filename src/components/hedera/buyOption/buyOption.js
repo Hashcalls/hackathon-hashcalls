@@ -16,7 +16,7 @@ const WRITER_NFT_ID = process.env.REACT_APP_WRITER_NFT_ID;
 const BUYER_NFT_ID = process.env.REACT_APP_NFT_ID;
 
 
-export const handler = async (event, walletData, optionBuyerId, premium, writerNftSerial) => {
+export const handler = async (event) => {
   if (event.requestContext) {
     // Preflight request handling for CORS.
     if (event.requestContext.http.method === 'OPTIONS') {
@@ -24,6 +24,25 @@ export const handler = async (event, walletData, optionBuyerId, premium, writerN
     } else if (event.requestContext.http.method !== 'POST') { // Require POST.
       return createResponse(405, 'Method Not Allowed', 'POST method is required.', {});
     }
+  }
+
+
+  // Take params from the event body
+  let optionBuyerId, premium, writerNftSerial, walletData;
+  try {
+    const body = JSON.parse(event.body);
+
+    if (!body.optionBuyerId || !body.premium || !body.writerNftSerial || !body.walletData) {
+      throw new Error("Missing required parameters.");
+    }
+
+    optionBuyerId = body.optionBuyerId;
+    premium = body.premium;
+    writerNftSerial = body.writerNftSerial;
+    walletData = body.walletData;
+
+  } catch (error) {
+    return createResponse(400, 'Bad Request', 'Error parsing request body.', error);
   }
 
 
@@ -50,12 +69,8 @@ export const handler = async (event, walletData, optionBuyerId, premium, writerN
     const serialNumber = mintReceipt.serials[0].toNumber();
     console.log(`Option Buyer NFT Minted - Serial Number: ${serialNumber}`);
 
-    console.log(`=== Premium Payment and NFT Transfer Initated for amount: ${premium} HBAR`);
     console.log(
-      `From Buyer: ${optionBuyerId} , new owner of buyer NFT ID ${BUYER_NFT_ID} serial ${serialNumber}`
-    );
-    console.log(
-      `To Writer: ${writerAccountId}, owner of writer NFT ID ${WRITER_NFT_ID} serial ${writerNftSerial}`
+      `=== Premium Payment and NFT Transfer Initated for amount: ${premium} HBAR From Buyer: ${optionBuyerId} , new owner of buyer NFT ID ${BUYER_NFT_ID} serial ${serialNumber} To Writer: ${writerAccountId}, owner of writer NFT ID ${WRITER_NFT_ID} serial ${writerNftSerial}`
     );
 
     const hashconnect = walletData[0];

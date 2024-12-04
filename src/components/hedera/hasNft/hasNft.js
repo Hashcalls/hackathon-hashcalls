@@ -19,7 +19,7 @@ const client = Client.forTestnet().setOperator(
 );
 
 
-export const handler = async (event, nftTokenId, serialNumber) => {
+export const handler = async (event) => {
   if (event.requestContext) {
     // Preflight request handling for CORS.
     if (event.requestContext.http.method === 'OPTIONS') {
@@ -30,7 +30,24 @@ export const handler = async (event, nftTokenId, serialNumber) => {
   }
 
 
-  // Check if the buyer has enough funds to purchase the option
+  // Take body params
+  let nftTokenId, serialNumber;
+  try {
+    const body = JSON.parse(event.body);
+
+    if (!nftTokenId || !serialNumber) {
+      throw new Error("Missing required parameters.");
+    }
+
+    nftTokenId = body.nftTokenId;
+    serialNumber = body.serialNumber;
+
+  } catch (error) {
+    return createResponse(400, 'Bad Request', 'Error parsing request body.', error);
+  }
+
+
+  // Check if the user has the NFT
   try {
     const nftTokenIdObj = TokenId.fromString(nftTokenId);
 
