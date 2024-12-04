@@ -115,10 +115,36 @@ export const handler = async (event) => {
       txResponse.transactionId
     );
 
-    return createResponse(200, "Success", "Writer NFT minted and transferred.", {
-      serialNumber,
-      receipt
-    });
+    // Upload to DynamoDB
+    try {
+      const documentClient = new AWS.DynamoDB.DocumentClient();
+
+      const params = {
+        TableName: "CORE",
+        Item: {
+          PK: `ID#${serialNumber}`,
+          SK: "METADATA#WRITEOPTION",
+          transactionId: txResponse.transactionId.toString(),
+          writerAccountId,
+          tokenId,
+          amount,
+          strikePrice,
+          isCall,
+          transactionStatus: receipt.status.toString(),
+          transactionDate: new Date().toISOString(),
+        },
+      };
+
+      await documentClient.put(params).promise();
+      return createResponse(200, "Success", "Writer NFT minted and transferred.", {
+        serialNumber,
+        receipt
+      });
+
+
+    } catch (err) {
+      return createResponse(500, "Failed to upload to DynamoDB", err);
+    }
 
   } catch (error) {
     return createResponse(500, "Internal Server Error", error);

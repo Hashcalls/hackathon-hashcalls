@@ -143,9 +143,36 @@ export const handler = async (event) => {
       `Writer NFT wiped successfully. Transaction status: ${wipeReceipt.status}`
     );
 
-    return createResponse(200, "Success", "Option Exercise Complete", {
-      receipt,
-    });
+    // Upload to DynamoDB
+    try {
+      const documentClient = new AWS.DynamoDB.DocumentClient();
+
+      const params = {
+        TableName: "CORE",
+        Item: {
+          PK: `ID#${buyerId}`,
+          SK: "METADATA#EXERCISEOPTION",
+          transactionId: txResponse.transactionId.toString(),
+          buyerId,
+          writerAccountId,
+          writerNftSerial,
+          buyerNftSerial,
+          tokenId,
+          strikePrice,
+          payout,
+          isCall,
+          receipt,
+        },
+      };
+
+      await documentClient.put(params).promise();
+      return createResponse(200, "Success", "Option Exercise Complete", {
+        receipt,
+      });
+
+    } catch (err) {
+      return createResponse(500, "Failed to upload to DynamoDB", err);
+    }
 
   } catch (err) {
     return createResponse(500, "Internal Server Error", err);

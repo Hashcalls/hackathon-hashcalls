@@ -6,6 +6,7 @@ import {
   PrivateKey,
 } from "@hashgraph/sdk";
 import { hasNft } from "./hasNft";
+import AWS from "aws-sdk";
 
 // Global Variables
 const escrowAccountId = process.env.REACT_APP_ESCROW_ID;
@@ -103,9 +104,34 @@ export const handler = async (event) => {
 
     console.log(`Transaction Status: ${receipt.status.toString()}`);
 
-    return createResponse(200, "Success", "Option Buy Complete", {
-      serialNumber,
-    });
+    // Upload to DynamoDB
+    try {
+      const documentClient = new AWS.DynamoDB.DocumentClient();
+
+      const params = {
+        TableName: "CORE",
+        Item: {
+          PK: `ID#${optionBuyerId}`,
+          SK: "METADATA#BUYOPTION",
+          transactionId: txResponse.transactionId.toString(),
+          optionBuyerId,
+          premium,
+          writerAccountId,
+          writerNftSerial,
+          buyerNftSerial: serialNumber,
+          transactionStatus: receipt.status.toString(),
+          transactionDate: new Date().toISOString(),
+        },
+      };
+
+      await documentClient.put(params).promise();
+      return createResponse(200, "Success", "Option Buy Complete", {
+        serialNumber,
+      });
+
+    } catch (err) {
+      return createResponse(500, "Failed to upload to DynamoDB", err);
+    }
 
   } catch (err) {
     return createResponse(500, "Internal Server Error", err);
