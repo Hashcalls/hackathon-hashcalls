@@ -7,20 +7,32 @@ import {
 } from "@hashgraph/sdk";
 import { hasNft } from "./hasNft";
 
-export async function buyOptionFcn(
-  walletData,
-  optionBuyerId,
-  premium,
-  writerNftSerial
-) {
-  const escrowAccountId = process.env.REACT_APP_ESCROW_ID;
-  const escrowAccountKey = process.env.REACT_APP_ESCROW_KEY;
-  const k = PrivateKey.fromStringECDSA(escrowAccountKey);
-  const WRITER_NFT_ID = process.env.REACT_APP_WRITER_NFT_ID;
-  const BUYER_NFT_ID = process.env.REACT_APP_NFT_ID;
+// Global Variables
+const escrowAccountId = process.env.REACT_APP_ESCROW_ID;
+const escrowAccountKey = process.env.REACT_APP_ESCROW_KEY;
+const k = PrivateKey.fromStringECDSA(escrowAccountKey);
+const client = Client.forTestnet().setOperator(escrowAccountId, k);
+const WRITER_NFT_ID = process.env.REACT_APP_WRITER_NFT_ID;
+const BUYER_NFT_ID = process.env.REACT_APP_NFT_ID;
 
-  const client = Client.forTestnet().setOperator(escrowAccountId, k);
 
+export const handler = async (event, walletData, optionBuyerId, premium, writerNftSerial) => {
+  if (event.requestContext) {
+    // Preflight request handling for CORS.
+    if (event.requestContext.http.method === 'OPTIONS') {
+      return createResponse(204, 'No Content', 'Preflight request.', {});
+    } else if (event.requestContext.http.method !== 'POST') { // Require POST.
+      return createResponse(405, 'Method Not Allowed', 'POST method is required.', {});
+    }
+
+    // Validate x-api-key header.
+    if (event.headers['x-api-key'] !== process.env.X_API_KEY) {
+      return createResponse(403, 'Forbidden', 'Invalid or missing x-api-key header.', {});
+    }
+  }
+
+
+  // Check if the buyer has enough funds to purchase the option
   try {
     // Get current writer NFT owner
     const writerAccountId = await hasNft(WRITER_NFT_ID, writerNftSerial);
@@ -42,10 +54,8 @@ export async function buyOptionFcn(
     const mintReceipt = await mintTxResponse.getReceipt(client);
     const serialNumber = mintReceipt.serials[0].toNumber();
     console.log(`Option Buyer NFT Minted - Serial Number: ${serialNumber}`);
-    console.log("=======================\n");
 
-    console.log("=== Premium Payment and NFT Transfer Initated ===");
-    console.log(`Premium Amount: ${premium} HBAR`);
+    console.log(`=== Premium Payment and NFT Transfer Initated for amount: ${premium} HBAR`);
     console.log(
       `From Buyer: ${optionBuyerId} , new owner of buyer NFT ID ${BUYER_NFT_ID} serial ${serialNumber}`
     );
@@ -82,14 +92,32 @@ export async function buyOptionFcn(
     );
 
     console.log(`Transaction Status: ${receipt.status.toString()}`);
-    console.log("Option Buy Complete!");
-    console.log("====================================\n");
 
-    return serialNumber;
-  } catch (error) {
-    console.error("\n=== Error During Option Purchase ===");
-    console.error(`Error Details: ${error.message}`);
-    console.error("=================================\n");
-    throw new Error(`Option purchase failed: ${error.message}`);
+    return createResponse(200, "Success", "Option Buy Complete", {
+      serialNumber,
+    });
+
+  } catch (err) {
+    return createResponse(500, "Internal Server Error", err);
   }
 }
+
+
+// Create response.
+const createResponse = (statusCode, statusDescription, message, data) => {
+  const response = {
+    statusCode,
+    statusDescription,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      message,
+      data
+    })
+  };
+
+  statusCode === 200 ? console.log('RESPONSE:', response) : console.error('RESPONSE:', response);
+
+  return response;
+};

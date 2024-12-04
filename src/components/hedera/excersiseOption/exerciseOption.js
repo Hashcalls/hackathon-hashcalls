@@ -9,16 +9,22 @@ import {
 } from "@hashgraph/sdk";
 import { hasNft } from "./hasNft";
 
-export const exerciseOptionFcn = async (
-  walletData,
-  tokenId,
-  buyerNftSerial,
-  buyerId,
-  strikePrice,
-  payout,
-  writerNftSerial,
-  isCall
-) => {
+export const handler = async (event, walletData, tokenId, buyerNftSerial, buyerId, strikePrice, payout, writerNftSerial, isCall) => {
+  if (event.requestContext) {
+    // Preflight request handling for CORS.
+    if (event.requestContext.http.method === 'OPTIONS') {
+      return createResponse(204, 'No Content', 'Preflight request.', {});
+    } else if (event.requestContext.http.method !== 'POST') { // Require POST.
+      return createResponse(405, 'Method Not Allowed', 'POST method is required.', {});
+    }
+
+    // Validate x-api-key header.
+    if (event.headers['x-api-key'] !== process.env.X_API_KEY) {
+      return createResponse(403, 'Forbidden', 'Invalid or missing x-api-key header.', {});
+    }
+  }
+
+
   const escrowAccountId = AccountId.fromString(process.env.REACT_APP_ESCROW_ID);
   const k = PrivateKey.fromStringECDSA(
     process.env.REACT_APP_ESCROW_KEY
@@ -40,7 +46,7 @@ export const exerciseOptionFcn = async (
   try {
     // Check NFT ownership
     const buyerNftId = process.env.REACT_APP_NFT_ID;
-    const nftOwner = await hasNft( buyerNftId, buyerNftSerial);
+    const nftOwner = await hasNft(buyerNftId, buyerNftSerial);
     if (nftOwner !== buyerId) {
       throw new Error(
         "The buyer does not own the NFT required to exercise this call option."
@@ -52,34 +58,26 @@ export const exerciseOptionFcn = async (
 
     if (isCall) {
       tx = await new TransferTransaction()
-      .addHbarTransfer(writerAccountId, new Hbar(strikePrice)) // Pay strike price to seller
-      .addHbarTransfer(buyerId, new Hbar(-strikePrice)) // Deduct strike price from buyer
-      .addTokenTransfer(tokenId, escrowAccountId, -payout) // Release tokens from escrow
-      .addTokenTransfer(tokenId, buyerId, payout) // Send tokens to buyer
-      .addNftTransfer(buyerNftId, buyerNftSerial, buyerId, escrowAccountId) // Transfer NFT to escrow
-      .freezeWith(client);
+        .addHbarTransfer(writerAccountId, new Hbar(strikePrice)) // Pay strike price to seller
+        .addHbarTransfer(buyerId, new Hbar(-strikePrice)) // Deduct strike price from buyer
+        .addTokenTransfer(tokenId, escrowAccountId, -payout) // Release tokens from escrow
+        .addTokenTransfer(tokenId, buyerId, payout) // Send tokens to buyer
+        .addNftTransfer(buyerNftId, buyerNftSerial, buyerId, escrowAccountId) // Transfer NFT to escrow
+        .freezeWith(client);
 
-      console.log("=== Call Option Exercise Initiated ===");
-      console.log(`Transferring strike price ${strikePrice} from buyer ${buyerId} owner of ${buyerNftId} serial ${buyerNftSerial}`);
-      console.log(`To ${writerAccountId} owner of ${writerNftId} serial ${writerNftSerial}`);
-      console.log(`For ${payout} amount of ${tokenId} released from escrow ${escrowAccountId}`);
+      console.log(`Transferring strike price ${strikePrice} from buyer ${buyerId} owner of ${buyerNftId} serial ${buyerNftSerial}To ${writerAccountId} owner of ${writerNftId} serial ${writerNftSerial} For ${payout} amount of ${tokenId} released from escrow ${escrowAccountId}`);
     }
     else {
       tx = await new TransferTransaction()
-      .addTokenTransfer(tokenId, buyerId, -payout) // Buyer sends tokens to the seller
-      .addTokenTransfer(tokenId, writerAccountId, payout) // Seller receives tokens
-      .addHbarTransfer(escrowAccountId, new Hbar(-strikePrice)) // Escrow releases strike price
-      .addHbarTransfer(buyerId, new Hbar(strikePrice)) // Buyer receives strike price
-      .addNftTransfer(buyerNftId, buyerNftSerial, buyerId, escrowAccountId) // Transfer NFT to escrow
-      .freezeWith(client);
+        .addTokenTransfer(tokenId, buyerId, -payout) // Buyer sends tokens to the seller
+        .addTokenTransfer(tokenId, writerAccountId, payout) // Seller receives tokens
+        .addHbarTransfer(escrowAccountId, new Hbar(-strikePrice)) // Escrow releases strike price
+        .addHbarTransfer(buyerId, new Hbar(strikePrice)) // Buyer receives strike price
+        .addNftTransfer(buyerNftId, buyerNftSerial, buyerId, escrowAccountId) // Transfer NFT to escrow
+        .freezeWith(client);
 
-      console.log("=== Put Option Exercise Initiated ===");
-      console.log(`Transferring ${payout} amount of ${tokenId} from buyer ${buyerId} owner of ${buyerNftId} serial ${buyerNftSerial}`);
-      console.log(`To ${writerAccountId} owner of ${writerNftId} serial ${writerNftSerial}`);
-      console.log(`For ${strikePrice} HBAR released from escrow ${escrowAccountId}`);
+      console.log(`Transferring ${payout} amount of ${tokenId} from buyer ${buyerId} owner of ${buyerNftId} serial ${buyerNftSerial} To ${writerAccountId} owner of ${writerNftId} serial ${writerNftSerial} For ${strikePrice} HBAR released from escrow ${escrowAccountId}`);
     }
-
-     
 
     const signedTx = await tx.sign(k);
     const txResponse = await signedTx.executeWithSigner(signer);
@@ -94,8 +92,6 @@ export const exerciseOptionFcn = async (
       );
     }
 
-    console.log(`=== Option Exercise Completed Successfully ===`);
-    console.log("--------------------------------------");
     console.log("Burning Buyer NFT...");
     const nftId = process.env.REACT_APP_NFT_ID;
     const burnTx = await new TokenBurnTransaction()
@@ -110,14 +106,9 @@ export const exerciseOptionFcn = async (
     console.log(
       `NFT burned successfully. Transaction status: ${burnReceipt.status}`
     );
-    console.log("=== Option Exercise Completed Successfully ===");
 
     // Add writer NFT wipe
-    console.log("--------------------------------------");
-    console.log("Wiping Writer NFT...");
-    console.log(`Token ID: ${writerNftId}`);
-    console.log(`Serial Number: ${writerNftSerial}`);
-    console.log(`Account to wipe: ${writerAccountId}`);
+    console.log(`Wiping Writer NFT... Token ID: ${writerNftId}, Serial Number: ${writerNftSerial}, Account to wipe: ${writerAccountId}`);
 
     const wipeTx = await new TokenWipeTransaction()
       .setTokenId(writerNftId)
@@ -132,11 +123,32 @@ export const exerciseOptionFcn = async (
     console.log(
       `Writer NFT wiped successfully. Transaction status: ${wipeReceipt.status}`
     );
-    console.log("=== Option Exercise Completed Successfully ===");
 
-    return receipt;
-  } catch (e) {
-    console.error("Error during exerciseOptionFcn:", e);
-    throw e;
+    return createResponse(200, "Success", "Option Exercise Complete", {
+      receipt,
+    });
+
+  } catch (err) {
+    return createResponse(500, "Internal Server Error", err);
   }
+};
+
+
+// Create response.
+const createResponse = (statusCode, statusDescription, message, data) => {
+  const response = {
+    statusCode,
+    statusDescription,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      message,
+      data
+    })
+  };
+
+  statusCode === 200 ? console.log('RESPONSE:', response) : console.error('RESPONSE:', response);
+
+  return response;
 };
