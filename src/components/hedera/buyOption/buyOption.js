@@ -5,7 +5,6 @@ import {
   TransferTransaction,
   PrivateKey,
 } from "@hashgraph/sdk";
-import { hasNft } from "./hasNft";
 import AWS from "aws-sdk";
 
 // Global Variables
@@ -15,6 +14,25 @@ const k = PrivateKey.fromStringECDSA(escrowAccountKey);
 const client = Client.forTestnet().setOperator(escrowAccountId, k);
 const WRITER_NFT_ID = process.env.REACT_APP_WRITER_NFT_ID;
 const BUYER_NFT_ID = process.env.REACT_APP_NFT_ID;
+
+
+// Has NFT function
+const hasNft = async (writerNftId, writerNftSerial) => {
+  const response = await fetch("https://5re3jroxrqvlb5l7mlymcrhuo40tjlxq.lambda-url.us-east-1.on.aws/", {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      writerNftId,
+      writerNftSerial
+    }),
+  });
+
+  const responseData = await response.json();
+
+  return responseData.data;
+};
 
 
 export const handler = async (event) => {
@@ -47,7 +65,7 @@ export const handler = async (event) => {
   }
 
 
-  // Check if the buyer has enough funds to purchase the option
+  // TODO: Move into seperate try blocks
   try {
     // Get current writer NFT owner
     const writerAccountId = await hasNft(WRITER_NFT_ID, writerNftSerial);
@@ -109,7 +127,7 @@ export const handler = async (event) => {
       const documentClient = new AWS.DynamoDB.DocumentClient();
 
       const params = {
-        TableName: "CORE",
+        TableName: process.env.TABLE_NAME,
         Item: {
           PK: `ID#${optionBuyerId}`,
           SK: "METADATA#BUYOPTION",

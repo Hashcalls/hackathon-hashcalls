@@ -6,6 +6,7 @@ import {
   AccountId,
   Hbar,
 } from "@hashgraph/sdk";
+import AWS from "aws-sdk";
 
 
 // Global variables
@@ -47,7 +48,7 @@ export const handler = async (event) => {
   }
 
 
-  // Check if the buyer has enough funds to purchase the option
+  // TODO: Move into seperate try blocks
   try {
     console.log("Minting Writer NFT...");
 
@@ -120,7 +121,7 @@ export const handler = async (event) => {
       const documentClient = new AWS.DynamoDB.DocumentClient();
 
       const params = {
-        TableName: "CORE",
+        TableName: process.env.TABLE_NAME,
         Item: {
           PK: `ID#${serialNumber}`,
           SK: "METADATA#WRITEOPTION",

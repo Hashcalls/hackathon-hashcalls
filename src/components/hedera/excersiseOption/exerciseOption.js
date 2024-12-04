@@ -7,12 +7,32 @@ import {
   TokenBurnTransaction,
   TokenWipeTransaction,
 } from "@hashgraph/sdk";
-import { hasNft } from "./hasNft";
+import AWS from "aws-sdk";
 
 // Global variables
 const escrowAccountId = AccountId.fromString(process.env.REACT_APP_ESCROW_ID);
 const k = PrivateKey.fromStringECDSA(process.env.REACT_APP_ESCROW_KEY);
 const writerNftId = process.env.REACT_APP_WRITER_NFT_ID;
+
+
+// Has NFT function
+const hasNft = async (NftId, NftSerial) => {
+  const response = await fetch("https://5re3jroxrqvlb5l7mlymcrhuo40tjlxq.lambda-url.us-east-1.on.aws/", {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      NftId,
+      NftSerial
+    }),
+  });
+
+  const responseData = await response.json();
+
+  return responseData.data;
+};
+
 
 
 export const handler = async (event) => {
@@ -61,11 +81,12 @@ export const handler = async (event) => {
   const signer = hashconnect.getSigner(provider);
 
 
-  // Check if the buyer has enough funds to purchase the option
+  // TODO: Move into seperate try blocks
   try {
     // Check NFT ownership
     const buyerNftId = process.env.REACT_APP_NFT_ID;
     const nftOwner = await hasNft(buyerNftId, buyerNftSerial);
+
     if (nftOwner !== buyerId) {
       throw new Error(
         "The buyer does not own the NFT required to exercise this call option."
@@ -148,7 +169,7 @@ export const handler = async (event) => {
       const documentClient = new AWS.DynamoDB.DocumentClient();
 
       const params = {
-        TableName: "CORE",
+        TableName: process.env.TABLE_NAME,
         Item: {
           PK: `ID#${buyerId}`,
           SK: "METADATA#EXERCISEOPTION",

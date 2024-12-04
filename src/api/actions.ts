@@ -21,7 +21,7 @@ export async function buyOption(optionBuyerId: string, premium: number, writerNf
 
 // Excercise option lambda
 export async function exerciseOption(optionBuyerId: string, premium: number, writerNftSerial: string, walletData: any, tokenId: string, buyerNftSerial: string, buyerId: string, strikePrice: number, payout: number, isCall: boolean) {
-    const dynamoResponse = await fetch("", {
+    const dynamoResponse = await fetch("https://odamc4dmgjxihjzt74hbrh6yo40phffh.lambda-url.us-east-1.on.aws/", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -48,7 +48,7 @@ export async function exerciseOption(optionBuyerId: string, premium: number, wri
 
 // Write option lambda
 export async function writeOption(walletData: any, writerAccountId: string, tokenId: string, amount: number, strikePrice: number, isCall: boolean) {
-    const dynamoResponse = await fetch("", {
+    const dynamoResponse = await fetch("https://u7sb2pdqnvtcscxntt57odvgka0grafq.lambda-url.us-east-1.on.aws/", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
