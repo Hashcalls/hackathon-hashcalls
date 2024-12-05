@@ -41,7 +41,7 @@ function App() {
 
   async function addOption() {
 
-    const writerNftSerial = await writeOption(walletData, accountId, token, amount, strike, isCall);
+    const writerNftSerial = await writeOption(accountId, token, amount, strike, isCall);
 
     // Retrieve the signer
     const hashconnect = walletData[0];

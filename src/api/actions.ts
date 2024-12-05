@@ -47,14 +47,13 @@ export async function exerciseOption(optionBuyerId: string, premium: number, wri
 
 
 // Write option lambda
-export async function writeOption(walletData: any, writerAccountId: string, tokenId: string, amount: number, strikePrice: number, isCall: boolean) {
+export async function writeOption(writerAccountId: string, tokenId: string, amount: number, strikePrice: number, isCall: boolean) {
     const dynamoResponse = await fetch("https://qy44huzg7fod57jkpaqvp7uwi40ojmdz.lambda-url.us-east-1.on.aws/", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            walletData,
             writerAccountId,
             tokenId,
             amount,

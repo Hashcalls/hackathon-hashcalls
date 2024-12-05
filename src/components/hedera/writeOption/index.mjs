@@ -27,11 +27,11 @@ export const handler = async (event) => {
 
 
   // Take in body params
-  let walletData, writerAccountId, tokenId, amount, strikePrice, isCall;
+  let writerAccountId, tokenId, amount, strikePrice, isCall;
   try {
     const body = JSON.parse(event.body);
 
-    if (!body.writerAccountId || !body.tokenId || !body.amount || !body.strikePrice || !body.isCall || !body.walletData) {
+    if (!body.writerAccountId || !body.tokenId || !body.amount || !body.strikePrice || !body.isCall) {
       throw new Error("Missing required parameters.");
     }
 
@@ -40,7 +40,6 @@ export const handler = async (event) => {
     amount = body.amount;
     strikePrice = body.strikePrice;
     isCall = body.isCall;
-    walletData = body.walletData;
 
   } catch (error) {
     return createResponse(400, 'Bad Request', 'Error parsing request body.', error);
