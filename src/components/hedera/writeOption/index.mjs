@@ -101,8 +101,10 @@ export const handler = async (event) => {
     const metadata = { serialNumber, transactionId: mintTxResponse.transactionId.toString(), writerAccountId, tokenId, amount, strikePrice, isCall };
 
     const signedTx = await transferTx.sign(k);
+    const signedTxBytes = signedTx.toBytes();
+    const signedTxBase64 = Buffer.from(signedTxBytes).toString("base64");
 
-    return createResponse(200, "NFT minted", "Transaction to sign created", { signedTx, metadata });
+    return createResponse(200, "NFT minted", "Transaction to sign created", { signedTx: signedTxBase64, metadata });
 
   } catch (error) {
     return createResponse(500, "Internal Server Error", error);

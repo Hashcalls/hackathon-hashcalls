@@ -53,7 +53,7 @@ function App() {
     );
     const signer = hashconnect.getSigner(provider);
 
-    const transferReceipt = await signTx(writerNftSerial.data.tx, signer, writerNftSerial.data.metadata, provider);
+    const transferReceipt = await signTx(writerNftSerial.data.signedTx, signer, writerNftSerial.data.metadata, provider);
     console.log("Transfer receipt:", transferReceipt);
 
     const newOption = {
