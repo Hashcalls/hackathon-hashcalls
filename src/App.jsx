@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import walletConnectFcn from "./components/hedera/walletConnect.js";
 import "./styles/App.css";
-import { buyOptionFcn } from "./components/hedera/buyOption.js";
-import { writeOptionFcn } from "./components/hedera/writeOption.js";
-import { exerciseOptionFcn } from "./components/hedera/exerciseOption.js";
+import { buyOption, writeOption, exerciseOption } from "./api/actions.ts";
+import signTx from "./components/hedera/signTx.js";
 
 
 function App() {
@@ -42,7 +41,20 @@ function App() {
 
   async function addOption() {
 
-    const writerNftSerial = await writeOptionFcn(walletData, accountId, token, amount, strike, isCall);
+    const writerNftSerial = await writeOption(accountId, token, amount, strike, isCall);
+
+    // Retrieve the signer
+    const hashconnect = walletData[0];
+    const saveData = walletData[1];
+    const provider = hashconnect.getProvider(
+      "testnet",
+      saveData.topic,
+      accountId
+    );
+    const signer = hashconnect.getSigner(provider);
+
+    const transferReceipt = await signTx(writerNftSerial.data.signedTx, signer, writerNftSerial.data.metadata, provider);
+    console.log("Transfer receipt:", transferReceipt);
 
     const newOption = {
       token,
@@ -68,7 +80,7 @@ function App() {
     setExpiry("");
   }
 
-  async function buyOption() {
+  async function buyOptionFnc() {
     if (selectedOptionIndex === "") {
       alert("Please select an option to buy.");
       return;
@@ -78,7 +90,7 @@ function App() {
     const selectedOption = options[index];
     console.log("Selected Option:", selectedOption);
 
-    const serialNumber = await buyOptionFcn(
+    const serialNumber = await buyOption(
       walletData,
       accountId,
       selectedOption.premium,
@@ -96,7 +108,7 @@ function App() {
     console.log("Updated Options:", updatedOptions);
   }
 
-  async function exerciseOption() {
+  async function exerciseOptionFnc() {
     if (selectedOptionIndex === "") {
       alert("Please select an option to exercise.");
       return;
@@ -112,18 +124,18 @@ function App() {
     }
 
     try {
-              await exerciseOptionFcn(
-          walletData,
-          selectedOption.token,
-          selectedOption.buyerNftSerial,
-          accountId,
-          selectedOption.strike,
-          selectedOption.amount,
-          selectedOption.writerNftSerial,
-          isCall
-        );
+      await exerciseOption(
+        walletData,
+        selectedOption.token,
+        selectedOption.buyerNftSerial,
+        accountId,
+        selectedOption.strike,
+        selectedOption.amount,
+        selectedOption.writerNftSerial,
+        isCall
+      );
 
-     
+
       const updatedOptions = options.filter((_, idx) => idx !== index);
       setOptions(updatedOptions);
 
@@ -239,7 +251,7 @@ function App() {
             ))}
           </select>
         </div>
-        <button onClick={buyOption}>Buy Option</button>
+        <button onClick={buyOptionFnc}>Buy Option</button>
       </div>
 
       <div>
@@ -260,7 +272,7 @@ function App() {
             ))}
           </select>
         </div>
-        <button onClick={exerciseOption}>Exercise Option</button>
+        <button onClick={exerciseOptionFnc}>Exercise Option</button>
       </div>
     </div>
   );
