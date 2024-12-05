@@ -49,11 +49,11 @@ function App() {
     const provider = hashconnect.getProvider(
       "testnet",
       saveData.topic,
-      writerAccountId
+      accountId
     );
     const signer = hashconnect.getSigner(provider);
 
-    const transferReceipt = await signTx(writerNftSerial.data.tx, signer, writerNftSerial.data.metadata);
+    const transferReceipt = await signTx(writerNftSerial.data.tx, signer, writerNftSerial.data.metadata, provider);
     console.log("Transfer receipt:", transferReceipt);
 
     const newOption = {

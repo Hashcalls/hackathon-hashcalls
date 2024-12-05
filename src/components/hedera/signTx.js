@@ -1,6 +1,6 @@
 import { uploadOptionToDynamo } from "../../api/actions.ts";
 
-async function signTx(tx, signer, metadata) {
+async function signTx(tx, signer, metadata, provider) {
 
     // Get user to sign transaction
     const txResponse = await tx.executeWithSigner(signer);
