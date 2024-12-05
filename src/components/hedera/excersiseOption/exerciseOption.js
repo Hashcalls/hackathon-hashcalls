@@ -7,7 +7,6 @@ import {
   TokenBurnTransaction,
   TokenWipeTransaction,
 } from "@hashgraph/sdk";
-import AWS from "aws-sdk";
 
 // Global variables
 const escrowAccountId = AccountId.fromString(process.env.REACT_APP_ESCROW_ID);
@@ -55,9 +54,10 @@ export const handler = async (event) => {
       throw new Error("Missing required parameters.");
     }
 
+    buyerId = body.buyerId;
+
     tokenId = body.tokenId;
     buyerNftSerial = body.buyerNftSerial;
-    buyerId = body.buyerId;
     strikePrice = body.strikePrice;
     payout = body.payout;
     writerNftSerial = body.writerNftSerial;
@@ -171,10 +171,9 @@ export const handler = async (event) => {
       const params = {
         TableName: process.env.TABLE_NAME,
         Item: {
-          PK: `ID#${buyerId}`,
+          PK: `ID#${buyerNftSerial}`,
           SK: "METADATA#EXERCISEOPTION",
           transactionId: txResponse.transactionId.toString(),
-          buyerId,
           writerAccountId,
           writerNftSerial,
           buyerNftSerial,

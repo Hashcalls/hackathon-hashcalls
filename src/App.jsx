@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import walletConnectFcn from "./components/hedera/walletConnect.js";
 import "./styles/App.css";
 import { buyOption, writeOption, exerciseOption } from "./api/actions.js";
+import signTx from "./components/hedera/signTx.js";
 
 
 function App() {
@@ -41,6 +42,19 @@ function App() {
   async function addOption() {
 
     const writerNftSerial = await writeOption(walletData, accountId, token, amount, strike, isCall);
+
+    // Retrieve the signer
+    const hashconnect = walletData[0];
+    const saveData = walletData[1];
+    const provider = hashconnect.getProvider(
+      "testnet",
+      saveData.topic,
+      writerAccountId
+    );
+    const signer = hashconnect.getSigner(provider);
+
+    const transferReceipt = await signTx(writerNftSerial.data.tx, signer, writerNftSerial.data.metadata);
+    console.log("Transfer receipt:", transferReceipt);
 
     const newOption = {
       token,
