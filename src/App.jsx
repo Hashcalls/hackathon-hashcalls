@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import walletConnectFcn from "./components/hedera/walletConnect.js";
 import "./styles/App.css";
-import { buyOption, writeOption, exerciseOption } from "./api/actions.js";
+import { buyOption, writeOption, exerciseOption } from "./api/actions.ts";
 import signTx from "./components/hedera/signTx.js";
 
 

@@ -1,4 +1,4 @@
-import { uploadOptionToDynamo } from "../../api/actions";
+import { uploadOptionToDynamo } from "../../api/actions.ts";
 
 async function signTx(tx, signer, metadata) {
 
