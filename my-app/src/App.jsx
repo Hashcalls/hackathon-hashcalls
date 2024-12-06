@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import walletConnectFcn from "./components/hedera/walletConnect.js";
+import walletConnectFcn from "../../src/components/hedera/walletConnect.js";
 import "./styles/App.css";
-import { buyOption, writeOption, exerciseOption } from "./api/actions.ts";
-import signTx from "./components/hedera/signTx.js";
+import { buyOption, writeOption, exerciseOption } from "../../src/api/actions.js";
+import signTx from "../../src/components/hedera/signTx.js";
 
 
 function App() {
