@@ -6,6 +6,7 @@ import {
   AccountId,
   Hbar,
 } from "@hashgraph/sdk";
+import AWS from 'aws-sdk';
 
 
 // Global variables
@@ -46,7 +47,15 @@ export const handler = async (event) => {
   }
 
 
-  // TODO: Move into seperate try blocks
+  // Upload metadata to S3 for NFT minting
+  try {
+
+  } catch (error) {
+    return createResponse(500, "Failed to write to S3", error);
+  }
+
+
+  // Generate transaction to mint NFT for the user to sign
   try {
     console.log("Minting Writer NFT...");
 
