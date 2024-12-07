@@ -28,11 +28,11 @@ export const handler = async (event) => {
 
 
   // Take in body params
-  let writerAccountId, tokenId, amount, strikePrice, isCall;
+  let writerAccountId, tokenId, amount, strikePrice, isCall, premium, expiry;
   try {
     const body = JSON.parse(event.body);
 
-    if (!body.writerAccountId || !body.tokenId || !body.amount || !body.strikePrice || !body.isCall) {
+    if (!body.writerAccountId || !body.tokenId || !body.amount || !body.strikePrice || !body.isCall || !body.premium || !body.expiry) {
       throw new Error("Missing required parameters.");
     }
 
@@ -41,6 +41,8 @@ export const handler = async (event) => {
     amount = body.amount;
     strikePrice = body.strikePrice;
     isCall = body.isCall;
+    premium = body.premium;
+    expiry = body.expiry;
 
   } catch (error) {
     return createResponse(400, 'Bad Request', 'Error parsing request body.', error);
@@ -48,7 +50,26 @@ export const handler = async (event) => {
 
 
   // Upload metadata to S3 for NFT minting
+  let url;
   try {
+    const s3 = new AWS.S3();
+    const params = {
+      Bucket: process.env.S3_BUCKET,
+      Key: `${writerAccountId}/${tokenId}.json`,
+      Body: JSON.stringify({ tokenId, amount, strikePrice, isCall, premium, expiry }),
+      ContentType: 'application/json',
+    };
+
+    await s3.upload(params).promise();
+
+    console.log(`- Metadata uploaded to S3 for writer ${writerAccountId} and token ${tokenId}`);
+
+    url = await s3.getSignedUrlPromise('getObject', {
+      Bucket: process.env.S3_BUCKET,
+      Key: `${writerAccountId}/${tokenId}.json`,
+      Expires: 60 * 60
+    });
+
 
   } catch (error) {
     return createResponse(500, "Failed to write to S3", error);
