@@ -100,7 +100,7 @@ export const handler = async (event) => {
 
   // Construct metadata
   const metadata = {
-    name: `${optionType} Buy NFT`,
+    name: `${optionType} Buyer NFT`,
     description: `This NFT represents the buyer position of a HashStrike ${optionType.toLowerCase()} option`,
     creator: "JBuilds",
     image: imageUrl,
@@ -200,8 +200,35 @@ export const handler = async (event) => {
     const signedTx = await transferTx.sign(k);
     const signedTxBytes = signedTx.toBytes();
     const signedTxBase64 = Buffer.from(signedTxBytes).toString("base64");
+    
+    // After user buys NFT
+    // After minting and signing transaction...
 
-    return createResponse(200, "Option NFT minted", "Transaction to sign created", { signedTx: signedTxBase64, metadata });
+  try {
+    // Update DynamoDB with buyer NFT info
+    const updateParams = {
+      TableName: process.env.TABLE_NAME,
+      Key: {
+        PK: writerNftSerial,
+      },
+      UpdateExpression: 'set buyerNftSerial = :buyerNftSerial',
+      ExpressionAttributeValues: {
+        ':buyerNftSerial': serialNumber,
+      },
+      ReturnValues: 'ALL_NEW'
+    };
+
+    const updated = await dynamo.update(updateParams).promise();
+    console.log('DynamoDB Record Updated:', updated);
+
+    return createResponse(200, "Option Buy Complete", "Transaction to sign created", { 
+      signedTx: signedTxBase64, 
+      metadata 
+    });
+
+  } catch (err) {
+    return createResponse(500, "Failed to update DynamoDB record", err);
+  }
 
   } catch (err) {
     return createResponse(500, "Internal Server Error", err);
