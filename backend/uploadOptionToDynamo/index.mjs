@@ -14,11 +14,11 @@ export const handler = async (event) => {
 
 
   // Take in body params
-  let serialNumber, transactionId, writerAccountId, tokenId, amount, strikePrice, isCall;
+  let serialNumber, writerAccountId, tokenId, amount, strikePrice, isCall;
   try {
     const body = JSON.parse(event.body);
 
-    if (!body.writerAccountId || !body.tokenId || !body.amount || !body.strikePrice || !body.isCall || !body.serialNumber || !body.transactionId) {
+    if (!body.writerAccountId || !body.tokenId || !body.amount || !body.strikePrice || !body.isCall || !body.serialNumber) {
       throw new Error("Missing required parameters.");
     }
 
@@ -28,7 +28,6 @@ export const handler = async (event) => {
     strikePrice = body.strikePrice;
     isCall = body.isCall;
     serialNumber = body.serialNumber;
-    transactionId = body.transaction
 
   } catch (error) {
     return createResponse(400, 'Bad Request', 'Error parsing request body.', error);
@@ -67,7 +66,6 @@ export const handler = async (event) => {
         amount,
         strikePrice,
         isCall,
-        transactionId,
         timestamp: new Date().toISOString()
       }
     };
