@@ -1,5 +1,5 @@
 // Buy option lambda
-export async function buyOption(optionBuyerId, premium, writerNftSerial, walletData) {
+export async function buyOption(optionBuyerId, premium, writerNftSerial) {
     const dynamoResponse = await fetch("https://cq7w2aflxurbr2vzcf3ms2lsnq0ondne.lambda-url.us-east-1.on.aws/", {
         method: 'POST',
         headers: {
@@ -8,8 +8,7 @@ export async function buyOption(optionBuyerId, premium, writerNftSerial, walletD
         body: JSON.stringify({
             optionBuyerId,
             premium,
-            writerNftSerial,
-            walletData,
+            writerNftSerial
         }),
     });
 
