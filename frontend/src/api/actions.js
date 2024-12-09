@@ -69,7 +69,7 @@ export async function writeOption(writerAccountId, tokenId, amount, strikePrice,
 
 
 // Upload option to Dynamo Lambda
-export async function uploadOptionToDynamo(serialNumber, transactionId, writerAccountId, tokenId, amount, strikePrice, isCall) {
+export async function uploadOptionToDynamo(serialNumber, writerAccountId, tokenId, amount, strikePrice, isCall) {
     const dynamoResponse = await fetch("https://ulmpmp4ofacn343malpxfzgxeq0qbwba.lambda-url.us-east-1.on.aws/", {
         method: 'POST',
         headers: {
@@ -77,7 +77,6 @@ export async function uploadOptionToDynamo(serialNumber, transactionId, writerAc
         },
         body: JSON.stringify({
             serialNumber,
-            transactionId,
             writerAccountId,
             tokenId,
             amount,

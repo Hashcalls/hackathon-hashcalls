@@ -19,7 +19,7 @@ import {
 import walletConnectFcn from "./components/hedera/walletConnect.js";
 import "./styles/App.css";
 import signTx from "./components/hedera/signTx.js";
-import { writeOption } from "../api/actions.js";
+import { writeOption, uploadOptionToDynamo } from "../api/actions.js";
 
 export default function CreatePage() {
   const [walletData, setWalletData] = useState();
@@ -81,6 +81,15 @@ export default function CreatePage() {
       provider
     );
     console.log("Transfer receipt:", transferReceipt);
+
+    if (!transferReceipt.status) {
+      // TODO: Delete NFT metadata from S3
+      return;
+
+    } else {
+      // Upload option to DynamoDB
+      await uploadOptionToDynamo(writerNftSerial, accountId, token, amount, strike, isCall);
+    }
 
     // Clear input fields
     setToken("");
