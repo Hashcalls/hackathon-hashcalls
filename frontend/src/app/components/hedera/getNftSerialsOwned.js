@@ -1,5 +1,5 @@
 
-export const  getNftSerialsOwned = async (accountId, nftId) => {
+export async function getNftSerialsOwned(accountId, nftId) {
 
   try {
     if (!accountId || !nftId) {
@@ -32,3 +32,7 @@ export const  getNftSerialsOwned = async (accountId, nftId) => {
     return { isNftOwner: false, serials: [] }; // Ensure a consistent return structure
   }
 };
+
+export async function getHistoricNftSerialsWritten(accountId) {
+  // TODO: Implement this function
+}

@@ -15,7 +15,7 @@ export default function Marketplace() {
   useEffect(() => {
     async function fetchOptions() {
       const data = await getBuyableOptions();
-      setOptions(data);
+      setOptions(data.data);
     }
     fetchOptions();
   }, []);
@@ -28,7 +28,7 @@ export default function Marketplace() {
 
     const selectedOption = options[index]
     const serialNumber = await buyOption(
-      selectedOption.writerNftSerial,
+      selectedOption.PK,
       accountId
     )
 
@@ -41,7 +41,7 @@ export default function Marketplace() {
       serialNumber.data.signedTx,
       signer,
       accountId,
-      selectedOption.writerNftSerial,
+      selectedOption.PK,
       provider
     )
     console.log("Transfer receipt:", transferReceipt)
@@ -55,8 +55,8 @@ export default function Marketplace() {
       <CardContent>
         <div className="space-y-4">
           {options.map((option, index) => (
-            <Card key={option.id} className="bg-gray-700">
-              <CardContent className="p-4">
+            <Card key={option.PK} className="bg-gray-700">
+              <CardContent className="p-4 text-white">
                 <div className="flex justify-between items-center mb-2">
                   <span className="font-bold text-lg">{option.tokenId}</span>
                   <span

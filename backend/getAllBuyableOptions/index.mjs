@@ -28,3 +28,23 @@ export const handler = async (event) => {
         return createResponse(500, 'Failed to fetch items from Dynamo.', error);
     }
 };
+
+
+// Create response.
+const createResponse = (statusCode, statusDescription, message, data) => {
+    const response = {
+        statusCode,
+        statusDescription,
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            message,
+            data
+        })
+    };
+
+    statusCode === 200 ? console.log('RESPONSE:', response) : console.error('RESPONSE:', response);
+
+    return response;
+};
