@@ -46,7 +46,7 @@ export const handler = async (event) => {
 
 
   // Take in body params
-  let walletData, tokenId, buyerNftSerial, buyerId, strikePrice, payout, writerNftSerial, isCall;
+  let tokenId, buyerNftSerial, buyerId, strikePrice, payout, writerNftSerial, isCall;
   try {
     const body = JSON.parse(event.body);
 
@@ -164,35 +164,7 @@ export const handler = async (event) => {
       `Writer NFT wiped successfully. Transaction status: ${wipeReceipt.status}`
     );
 
-    // Upload to DynamoDB
-    try {
-      const documentClient = new AWS.DynamoDB.DocumentClient();
-
-      const params = {
-        TableName: process.env.TABLE_NAME,
-        Item: {
-          PK: `ID#${buyerNftSerial}`,
-          SK: "METADATA#EXERCISEOPTION",
-          transactionId: txResponse.transactionId.toString(),
-          writerAccountId,
-          writerNftSerial,
-          buyerNftSerial,
-          tokenId,
-          strikePrice,
-          payout,
-          isCall,
-          receipt,
-        },
-      };
-
-      await documentClient.put(params).promise();
-      return createResponse(200, "Success", "Option Exercise Complete", {
-        receipt,
-      });
-
-    } catch (err) {
-      return createResponse(500, "Failed to upload to DynamoDB", err);
-    }
+    return createResponse(200, "Option exercised", "Option exercised successfully", { receipt });
 
   } catch (err) {
     return createResponse(500, "Internal Server Error", err);

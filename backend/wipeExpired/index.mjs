@@ -2,6 +2,7 @@ import AWS from 'aws-sdk';
 
 const dynamo = new AWS.DynamoDB.DocumentClient();
 
+
 export const handler = async (event) => {
     if (event.requestContext) {
         // Preflight request handling for CORS.
@@ -57,6 +58,15 @@ export const handler = async (event) => {
     } catch (error) {
         return createResponse(500, 'Failed to delete expired NFTs from Dynamo.', error);
     }
+
+
+    // TODO: Delete all expired NFTs from S3
+    try {
+
+    } catch (error) {
+        return createResponse(500, 'Failed to delete expired NFTs from S3.', error);
+    }
+
 
     return createResponse(200, 'OK', 'Expired NFTs deleted.', {});
 
