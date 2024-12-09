@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "./components/ui/select";
 import "./styles/App.css";
-import signTx from "./components/hedera/signTx.js";
+import { signTx } from "./components/hedera/signTx.js";
 import { writeOption } from "../api/actions.js";
 
 export default function CreatePage() {

@@ -1,62 +1,87 @@
 "use client"
 
-import { motion } from 'framer-motion'
-import { Card, CardContent } from '@/app/components/ui/card'
+import React, { useState, useEffect, useContext } from 'react'
+import { buyOption } from '../../api/actions.js'
+import { signBuyTx } from '../components/hedera/signTx.js'
+import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card'
 import { Button } from '@/app/components/ui/button'
+import { WalletContext } from '../components/WalletProvider.jsx'
+import { getBuyableOptions } from '../../api/data.js'
 
-const mockOptions = [
-  { id: 1, tokenId: 'ETH', amount: 1, premium: 0.1, strikePrice: 2000, expiryDate: '2023-12-31', type: 'call' },
-  { id: 2, tokenId: 'BTC', amount: 0.5, premium: 0.05, strikePrice: 30000, expiryDate: '2023-12-31', type: 'put' },
-  { id: 3, tokenId: 'LINK', amount: 100, premium: 0.01, strikePrice: 10, expiryDate: '2023-12-31', type: 'call' },
-  { id: 4, tokenId: 'UNI', amount: 50, premium: 0.02, strikePrice: 5, expiryDate: '2023-12-31', type: 'put' },
-]
+export default function Marketplace() {
+  const { accountId, walletData } = useContext(WalletContext)
+  const [options, setOptions] = useState([])
 
-export default function MarketplacePage() {
+  useEffect(() => {
+    async function fetchOptions() {
+      const data = await getBuyableOptions();
+      setOptions(data);
+    }
+    fetchOptions();
+  }, []);
+
+  async function handleBuyOption(index) {
+    if (!accountId || !walletData) {
+      alert("Please connect your wallet first.")
+      return
+    }
+
+    const selectedOption = options[index]
+    const serialNumber = await buyOption(
+      selectedOption.writerNftSerial,
+      accountId
+    )
+
+    const hashconnect = walletData[0]
+    const saveData = walletData[1]
+    const provider = hashconnect.getProvider("testnet", saveData.topic, accountId)
+    const signer = hashconnect.getSigner(provider)
+
+    const transferReceipt = await signBuyTx(
+      serialNumber.data.signedTx,
+      signer,
+      accountId,
+      selectedOption.writerNftSerial,
+      provider
+    )
+    console.log("Transfer receipt:", transferReceipt)
+  }
+
   return (
-    (<div
-      className="min-h-screen bg-gradient-to-br from-blue-900 via-teal-900 to-green-900 p-8">
-      <motion.h1
-        className="text-4xl font-bold mb-8 text-center text-white"
-        initial={{ opacity: 0, y: -50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}>
-        Options Marketplace
-      </motion.h1>
-      <motion.div
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}>
-        {mockOptions.map((option, index) => (
-          <motion.div
-            key={option.id}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.3, delay: index * 0.1 }}>
-            <Card className="bg-gray-800 border-teal-500 overflow-hidden">
-              <CardContent className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <span className="text-2xl font-bold text-white">{option.tokenId}</span>
+    <Card className="bg-gray-800 border-blue-500">
+      <CardHeader>
+        <CardTitle className="text-2xl font-bold text-blue-400">Marketplace</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {options.map((option, index) => (
+            <Card key={option.id} className="bg-gray-700">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-bold text-lg">{option.tokenId}</span>
                   <span
-                    className={`text-sm px-2 py-1 rounded ${option.type === 'call' ? 'bg-green-600' : 'bg-red-600'}`}>
+                    className={`text-sm ${option.type === 'call' ? 'text-green-400' : 'text-red-400'}`}
+                  >
                     {option.type.toUpperCase()}
                   </span>
                 </div>
-                <div className="space-y-2 text-gray-300">
+                <div className="text-sm space-y-1">
                   <p>Amount: {option.amount}</p>
                   <p>Premium: {option.premium}</p>
                   <p>Strike Price: {option.strikePrice}</p>
                   <p>Expiry: {option.expiryDate}</p>
                 </div>
-                <Button className="w-full mt-4 bg-teal-600 hover:bg-teal-700 transition-colors">
+                <Button
+                  className="w-full mt-4 bg-blue-600 hover:bg-blue-700"
+                  onClick={() => handleBuyOption(index)}
+                >
                   Buy Option
                 </Button>
               </CardContent>
             </Card>
-          </motion.div>
-        ))}
-      </motion.div>
-    </div>)
-  );
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
 }
-

@@ -1,14 +1,13 @@
 // Buy option lambda
-export async function buyOption(optionBuyerId, premium, writerNftSerial) {
+export async function buyOption(writerNftSerial, optionBuyerId) {
     const dynamoResponse = await fetch("https://cq7w2aflxurbr2vzcf3ms2lsnq0ondne.lambda-url.us-east-1.on.aws/", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            optionBuyerId,
-            premium,
-            writerNftSerial
+            writerNftSerial,
+            optionBuyerId
         }),
     });
 
@@ -81,6 +80,25 @@ export async function uploadOptionToDynamo(serialNumber, writerAccountId, tokenI
             amount,
             strikePrice,
             isCall
+        }),
+    });
+
+    const result = await dynamoResponse.json();
+
+    return result;
+}
+
+
+// Add buyer option to Dynamo Lambda
+export async function addBuyerToOptionDynamo(buyerId, writerNftSerial) {
+    const dynamoResponse = await fetch("https://ve4ripes4mgifatczmpjdsjwzm0moslr.lambda-url.us-east-1.on.aws/", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            buyerId,
+            writerNftSerial
         }),
     });
 

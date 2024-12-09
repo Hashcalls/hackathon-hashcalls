@@ -47,15 +47,16 @@ export const handler = async (event) => {
 
 
   // Take params from the event body
-  let writerNftSerial;
+  let writerNftSerial, optionBuyerId;
   try {
     const body = JSON.parse(event.body);
 
-    if (!body.writerNftSerial) {
+    if (!body.writerNftSerial || !body.optionBuyerId) {
       throw new Error("Missing required parameters.");
     }
 
     writerNftSerial = body.writerNftSerial;
+    optionBuyerId = body.optionBuyerId;
 
   } catch (error) {
     return createResponse(400, 'Bad Request', 'Error parsing request body.', error);
@@ -195,13 +196,11 @@ export const handler = async (event) => {
       )
       .freezeWith(client);
 
-    const metadata = { serialNumber, transactionId: mintTxResponse.transactionId.toString(), writerAccountId, tokenId, amount, strikePrice, isCall };
-
     const signedTx = await transferTx.sign(k);
     const signedTxBytes = signedTx.toBytes();
     const signedTxBase64 = Buffer.from(signedTxBytes).toString("base64");
 
-    return createResponse(200, "Option NFT minted", "Transaction to sign created", { signedTx: signedTxBase64, metadata });
+    return createResponse(200, "Option NFT minted", "Transaction to sign created", { signedTx: signedTxBase64 });
 
   } catch (err) {
     return createResponse(500, "Internal Server Error", err);

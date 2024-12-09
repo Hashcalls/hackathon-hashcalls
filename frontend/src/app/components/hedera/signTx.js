@@ -1,4 +1,4 @@
-import { uploadOptionToDynamo } from "../../../api/actions.js";
+import { addBuyerToOptionDynamo, uploadOptionToDynamo } from "../../../api/actions.js";
 import { TransferTransaction } from "@hashgraph/sdk";
 
 export async function signTx(txBase64, signer, metadata, provider) {
@@ -22,6 +22,7 @@ export async function signTx(txBase64, signer, metadata, provider) {
         const { serialNumber, transactionId, writerAccountId, tokenId, amount, strikePrice, isCall } = metadata;
 
         uploadOptionToDynamo(serialNumber, transactionId, writerAccountId, tokenId, amount, strikePrice, isCall);
+
     } else {
         console.log("Transaction failed");
     }
@@ -30,7 +31,7 @@ export async function signTx(txBase64, signer, metadata, provider) {
 };
 
 
-export async function signBuyTx(txBase64, signer, metadata, provider) {
+export async function signBuyTx(txBase64, signer, writerNftSerial, buyerId, provider) {
     // Decode Base64 to bytes
     const txBytes = Buffer.from(txBase64, "base64");
 
@@ -48,7 +49,8 @@ export async function signBuyTx(txBase64, signer, metadata, provider) {
     if (receipt.status.toString() === "SUCCESS") {
         console.log("Transaction succeeded");
 
-        // TODO: Modify Dynamo to add Buyer
+        addBuyerToOptionDynamo(writerNftSerial, buyerId);
+
     } else {
         console.log("Transaction failed");
     }
