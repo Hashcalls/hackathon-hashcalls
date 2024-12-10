@@ -7,6 +7,7 @@ import {
   Hbar,
 } from "@hashgraph/sdk";
 import AWS from 'aws-sdk';
+import { v4 as uuidv4 } from 'uuid';
 
 
 // Global variables
@@ -93,10 +94,12 @@ export const handler = async (event) => {
   // Upload metadata to S3 for NFT minting
   let url;
   try {
+    const uniqueId = uuidv4().slice(0, 8);;
+
     const s3 = new AWS.S3({ region: 'us-east-1' });
     const params = {
       Bucket: process.env.S3_BUCKET,
-      Key: `${writerAccountId}/${tokenId}.json`,
+      Key: `${writerAccountId}/${uniqueId}.json`,
       Body: JSON.stringify(metadata),
       ContentType: 'application/json',
       ACL: 'public-read'
@@ -106,7 +109,7 @@ export const handler = async (event) => {
 
     console.log(`- Metadata uploaded to S3 for writer ${writerAccountId} and token ${tokenId}`);
 
-    url = `https://${process.env.S3_BUCKET}.s3.us-east-1.amazonaws.com/${writerAccountId}/${tokenId}.json`;
+    url = `https://${process.env.S3_BUCKET}.s3.us-east-1.amazonaws.com/${writerAccountId}/${uniqueId}.json`;
 
   } catch (error) {
     return createResponse(500, "Failed to write to S3", error);

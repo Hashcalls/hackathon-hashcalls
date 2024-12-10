@@ -6,6 +6,8 @@ import {
   PrivateKey,
 } from "@hashgraph/sdk";
 import AWS from "aws-sdk";
+import { v4 as uuidv4 } from 'uuid';
+
 
 // Global Variables
 const escrowAccountId = process.env.REACT_APP_ESCROW_ID;
@@ -24,8 +26,8 @@ const hasNft = async (writerNftId, writerNftSerial) => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      writerNftId,
-      writerNftSerial
+      nftTokenId: writerNftId,
+      serialNumber: writerNftSerial
     }),
   });
 
@@ -64,7 +66,7 @@ export const handler = async (event) => {
 
 
   // Fetch writer NFT metadata from Dynamo
-  let writerAccountId, tokenId, amount, premium, strikePrice, expiry, isCall;
+  let tokenId, amount, premium, strikePrice, expiry, isCall;
   try {
     const dynamo = new AWS.DynamoDB.DocumentClient();
     const params = {
@@ -81,7 +83,6 @@ export const handler = async (event) => {
       throw new Error("Writer NFT not found in Dynamo");
     }
 
-    writerAccountId = Item.writerAccountId;
     tokenId = Item.tokenId;
     amount = Item.amount;
     premium = Item.premium;
@@ -139,10 +140,12 @@ export const handler = async (event) => {
   // Upload metadata to S3 for NFT minting
   let url;
   try {
+    const uniqueId = uuidv4().slice(0, 8);;
+
     const s3 = new AWS.S3({ region: "us-east-1" });
     const params = {
       Bucket: process.env.S3_BUCKET,
-      Key: `${writerAccountId}/${tokenId}.json`,
+      Key: `${optionBuyerId}/${uniqueId}.json`,
       Body: JSON.stringify(metadata),
       ContentType: 'application/json',
       ACL: 'public-read'
@@ -150,9 +153,9 @@ export const handler = async (event) => {
 
     await s3.upload(params).promise();
 
-    console.log(`- Metadata uploaded to S3 for writer ${writerAccountId} and token ${tokenId}`);
+    console.log(`- Metadata uploaded to S3 for writer ${optionBuyerId} and token ${tokenId}`);
 
-    url = `https://${process.env.S3_BUCKET}.s3.us-east-1.amazonaws.com/${writerAccountId}/${tokenId}.json`;
+    url = `https://${process.env.S3_BUCKET}.s3.us-east-1.amazonaws.com/${optionBuyerId}/${uniqueId}.json`;
 
   } catch (error) {
     return createResponse(500, "Failed to write to S3", error);

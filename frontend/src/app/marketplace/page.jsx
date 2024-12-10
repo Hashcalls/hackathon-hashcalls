@@ -60,9 +60,9 @@ export default function Marketplace() {
                 <div className="flex justify-between items-center mb-2">
                   <span className="font-bold text-lg">{option.tokenId}</span>
                   <span
-                    className={`text-sm ${option.type ? 'text-green-400' : 'text-red-400'}`}
+                    className={`text-sm ${option.isCall ? 'text-green-400' : 'text-red-400'}`}
                   >
-                    {option.type ? 'CALL' : 'PUT'}
+                    {option.isCall ? 'CALL' : 'PUT'}
                   </span>
                 </div>
                 <div className="text-sm space-y-1">

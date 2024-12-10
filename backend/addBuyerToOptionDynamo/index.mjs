@@ -35,7 +35,7 @@ export const handler = async (event) => {
         const params = {
             TableName: process.env.TABLE_NAME,
             Key: {
-                PK: `ID${writerNftSerial}`,
+                PK: writerNftSerial,
                 SK: "METADATA#WRITEOPTION"
             },
             UpdateExpression: "set buyerId = :buyerId",

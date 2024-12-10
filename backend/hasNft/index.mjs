@@ -35,12 +35,12 @@ export const handler = async (event) => {
   try {
     const body = JSON.parse(event.body);
 
+    nftTokenId = body.nftTokenId;
+    serialNumber = body.serialNumber;
+
     if (!nftTokenId || !serialNumber) {
       throw new Error("Missing required parameters.");
     }
-
-    nftTokenId = body.nftTokenId;
-    serialNumber = body.serialNumber;
 
   } catch (error) {
     return createResponse(400, 'Bad Request', 'Error parsing request body.', error);

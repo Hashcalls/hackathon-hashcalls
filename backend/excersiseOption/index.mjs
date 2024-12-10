@@ -22,8 +22,8 @@ const hasNft = async (NftId, NftSerial) => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      NftId,
-      NftSerial
+      nftTokenId: NftId,
+      serialNumber: NftSerial
     }),
   });
 
