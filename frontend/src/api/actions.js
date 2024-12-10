@@ -45,7 +45,7 @@ export async function exerciseOption(optionBuyerId, premium, writerNftSerial, wa
 
 
 // Write option lambda
-export async function writeOption(writerAccountId, tokenId, amount, strikePrice, isCall) {
+export async function writeOption(writerAccountId, tokenId, amount, strikePrice, isCall, premium, expiry) {
     const dynamoResponse = await fetch("https://qy44huzg7fod57jkpaqvp7uwi40ojmdz.lambda-url.us-east-1.on.aws/", {
         method: 'POST',
         headers: {
@@ -56,7 +56,9 @@ export async function writeOption(writerAccountId, tokenId, amount, strikePrice,
             tokenId,
             amount,
             strikePrice,
-            isCall
+            isCall,
+            premium,
+            expiry
         }),
     });
 
@@ -67,7 +69,7 @@ export async function writeOption(writerAccountId, tokenId, amount, strikePrice,
 
 
 // Upload option to Dynamo Lambda
-export async function uploadOptionToDynamo(serialNumber, writerAccountId, tokenId, amount, strikePrice, isCall) {
+export async function uploadOptionToDynamo(serialNumber, writerAccountId, tokenId, amount, strikePrice, isCall, premium, expiry) {
     const dynamoResponse = await fetch("https://ulmpmp4ofacn343malpxfzgxeq0qbwba.lambda-url.us-east-1.on.aws/", {
         method: 'POST',
         headers: {
@@ -79,7 +81,9 @@ export async function uploadOptionToDynamo(serialNumber, writerAccountId, tokenI
             tokenId,
             amount,
             strikePrice,
-            isCall
+            isCall,
+            premium,
+            expiry
         }),
     });
 

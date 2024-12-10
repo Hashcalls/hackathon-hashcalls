@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { motion } from "framer-motion";
 import {
   Card,
@@ -19,6 +19,7 @@ import {
 import "./styles/App.css";
 import { signTx } from "./components/hedera/signTx.js";
 import { writeOption } from "../api/actions.js";
+import { WalletContext } from './components/WalletProvider.jsx';
 
 export default function CreatePage() {
   const [token, setToken] = useState("");
@@ -27,6 +28,7 @@ export default function CreatePage() {
   const [strike, setStrike] = useState("");
   const [expiry, setExpiry] = useState("");
   const [optionType, setOptionType] = useState("call");
+  const { accountId, walletData } = useContext(WalletContext)
 
   async function createOption() {
     if (!token || !amount || !strike || !expiry) {
@@ -40,7 +42,9 @@ export default function CreatePage() {
       token,
       amount,
       strike,
-      isCall
+      isCall,
+      premium,
+      expiry
     );
 
     const hashconnect = walletData[0];
@@ -145,7 +149,7 @@ export default function CreatePage() {
                 </Label>
                 <Input
                   id="expiry-date"
-                  type="datetime-local"
+                  // type="datetime-local"
                   value={expiry}
                   onChange={(e) => setExpiry(e.target.value)}
                   className="bg-gray-700 text-white"
@@ -167,6 +171,7 @@ export default function CreatePage() {
               </div>
               <Button
                 onClick={createOption}
+                type="button"
                 className="w-full bg-purple-600 hover:bg-purple-700 transition-colors"
               >
                 Create Option

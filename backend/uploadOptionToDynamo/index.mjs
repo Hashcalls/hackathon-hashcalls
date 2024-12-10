@@ -14,11 +14,11 @@ export const handler = async (event) => {
 
 
   // Take in body params
-  let serialNumber, transactionId, writerAccountId, tokenId, amount, strikePrice, isCall;
+  let serialNumber, transactionId, writerAccountId, tokenId, amount, strikePrice, isCall, premium, expiry;
   try {
     const body = JSON.parse(event.body);
 
-    if (!body.writerAccountId || !body.tokenId || !body.amount || !body.strikePrice || !body.isCall || !body.serialNumber || !body.transactionId) {
+    if (!body.writerAccountId || !body.tokenId || !body.amount || !body.strikePrice || !body.isCall || !body.serialNumber || !body.transactionId || !body.premium || !body.expiry) {
       throw new Error("Missing required parameters.");
     }
 
@@ -29,6 +29,8 @@ export const handler = async (event) => {
     isCall = body.isCall;
     serialNumber = body.serialNumber;
     transactionId = body.transaction
+    premium = body.premium;
+    expiry = body.expiry;
 
   } catch (error) {
     return createResponse(400, 'Bad Request', 'Error parsing request body.', error);
@@ -67,6 +69,8 @@ export const handler = async (event) => {
         amount,
         strikePrice,
         isCall,
+        premium,
+        expiry,
         transactionId,
         timestamp: new Date().toISOString()
       }
@@ -79,4 +83,24 @@ export const handler = async (event) => {
   }
 
   return createResponse(200, 'Success', 'Option written to DynamoDB.', {});
+};
+
+
+// Create response.
+const createResponse = (statusCode, statusDescription, message, data) => {
+  const response = {
+    statusCode,
+    statusDescription,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      message,
+      data
+    })
+  };
+
+  statusCode === 200 ? console.log('RESPONSE:', response) : console.error('RESPONSE:', response);
+
+  return response;
 };

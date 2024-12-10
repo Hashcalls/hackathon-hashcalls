@@ -19,9 +19,9 @@ export async function signTx(txBase64, signer, metadata, provider) {
     if (receipt.status.toString() === "SUCCESS") {
         console.log("Transaction succeeded");
 
-        const { serialNumber, transactionId, writerAccountId, tokenId, amount, strikePrice, isCall } = metadata;
+        const { serialNumber, transactionId, writerAccountId, tokenId, amount, strikePrice, isCall, premium, expiry } = metadata;
 
-        uploadOptionToDynamo(serialNumber, transactionId, writerAccountId, tokenId, amount, strikePrice, isCall);
+        uploadOptionToDynamo(serialNumber, transactionId, writerAccountId, tokenId, amount, strikePrice, isCall, premium, expiry);
 
     } else {
         console.log("Transaction failed");

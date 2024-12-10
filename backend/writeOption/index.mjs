@@ -53,7 +53,7 @@ export const handler = async (event) => {
 
 
   // Determine option type
-  const optionType = isCall === "Call" ? "Call" : "Put";
+  const optionType = isCall ? "Call" : "Put";
 
   // Construct metadata
   const metadata = {
@@ -93,24 +93,20 @@ export const handler = async (event) => {
   // Upload metadata to S3 for NFT minting
   let url;
   try {
-    const s3 = new AWS.S3();
+    const s3 = new AWS.S3({ region: 'us-east-1' });
     const params = {
       Bucket: process.env.S3_BUCKET,
       Key: `${writerAccountId}/${tokenId}.json`,
       Body: JSON.stringify(metadata),
       ContentType: 'application/json',
+      ACL: 'public-read'
     };
 
     await s3.upload(params).promise();
 
     console.log(`- Metadata uploaded to S3 for writer ${writerAccountId} and token ${tokenId}`);
 
-    url = await s3.getSignedUrlPromise('getObject', {
-      Bucket: process.env.S3_BUCKET,
-      Key: `${writerAccountId}/${tokenId}.json`,
-      Expires: 60 * 60
-    });
-
+    url = `https://${process.env.S3_BUCKET}.s3.us-east-1.amazonaws.com/${writerAccountId}/${tokenId}.json`;
 
   } catch (error) {
     return createResponse(500, "Failed to write to S3", error);
@@ -120,6 +116,7 @@ export const handler = async (event) => {
   // Generate transaction to mint NFT for the user to sign
   try {
     console.log("Minting Writer NFT...");
+    console.log(url);
 
     // Mint NFT
     const mintTx = new TokenMintTransaction()
@@ -169,7 +166,7 @@ export const handler = async (event) => {
       );
     }
 
-    const metadata = { serialNumber, transactionId: mintTxResponse.transactionId.toString(), writerAccountId, tokenId, amount, strikePrice, isCall };
+    const metadata = { serialNumber, transactionId: mintTxResponse.transactionId.toString(), writerAccountId, tokenId, amount, strikePrice, isCall, premium, expiry };
 
     const signedTx = await transferTx.sign(k);
     const signedTxBytes = signedTx.toBytes();
