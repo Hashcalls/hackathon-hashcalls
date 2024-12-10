@@ -28,32 +28,12 @@ export const handler = async (event) => {
     strikePrice = body.strikePrice;
     isCall = body.isCall;
     serialNumber = body.serialNumber;
-    transactionId = body.transaction
+    transactionId = body.transactionId;
     premium = body.premium;
     expiry = body.expiry;
 
   } catch (error) {
     return createResponse(400, 'Bad Request', 'Error parsing request body.', error);
-  }
-
-
-  // Check if unique in DynamoDB with query pk
-  try {
-    const params = {
-      TableName: process.env.TABLE_NAME,
-      Key: {
-        PK: `ID#${serialNumber}`,
-        SK: "METADATA#WRITEOPTION"
-      },
-    };
-
-    const data = await dynamo.query(params).promise();
-
-    if (data.Items) {
-      return createResponse(400, 'Bad Request', 'Option already exists.', {});
-    }
-  } catch (error) {
-    return createResponse(500, 'Internal Server Error', 'Error querying DynamoDB.', error);
   }
 
 

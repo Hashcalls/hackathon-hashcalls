@@ -18,8 +18,8 @@ const BUYER_NFT_ID = process.env.REACT_APP_NFT_ID;
 
 // Has NFT function
 const hasNft = async (writerNftId, writerNftSerial) => {
-  const response = await fetch("https://5re3jroxrqvlb5l7mlymcrhuo40tjlxq.lambda-url.us-east-1.on.aws/", {
-    method: 'GET',
+  const response = await fetch("https://cvcjxnv5rqp2hzsavo2h7jxnci0yfbbo.lambda-url.us-east-1.on.aws/", {
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
@@ -55,7 +55,7 @@ export const handler = async (event) => {
       throw new Error("Missing required parameters.");
     }
 
-    writerNftSerial = body.writerNftSerial;
+    writerNftSerial = body.writerNftSerial.split('#')[1];
     optionBuyerId = body.optionBuyerId;
 
   } catch (error) {
@@ -70,7 +70,8 @@ export const handler = async (event) => {
     const params = {
       TableName: process.env.TABLE_NAME,
       Key: {
-        PK: writerNftSerial,
+        PK: `ID#${writerNftSerial}`,
+        SK: "METADATA#WRITEOPTION"
       },
     };
 
@@ -138,24 +139,20 @@ export const handler = async (event) => {
   // Upload metadata to S3 for NFT minting
   let url;
   try {
-    const s3 = new AWS.S3();
+    const s3 = new AWS.S3({ region: "us-east-1" });
     const params = {
       Bucket: process.env.S3_BUCKET,
       Key: `${writerAccountId}/${tokenId}.json`,
       Body: JSON.stringify(metadata),
       ContentType: 'application/json',
+      ACL: 'public-read'
     };
 
     await s3.upload(params).promise();
 
     console.log(`- Metadata uploaded to S3 for writer ${writerAccountId} and token ${tokenId}`);
 
-    url = await s3.getSignedUrlPromise('getObject', {
-      Bucket: process.env.S3_BUCKET,
-      Key: `${writerAccountId}/${tokenId}.json`,
-      Expires: 60 * 60
-    });
-
+    url = `https://${process.env.S3_BUCKET}.s3.us-east-1.amazonaws.com/${writerAccountId}/${tokenId}.json`;
 
   } catch (error) {
     return createResponse(500, "Failed to write to S3", error);
@@ -165,10 +162,17 @@ export const handler = async (event) => {
   // Mint the NFT and return tx to sign
   try {
     // Get current writer NFT owner
-    const writerAccountId = await hasNft(WRITER_NFT_ID, writerNftSerial);
-    if (!writerAccountId) {
-      throw new Error("Could not find owner of writer NFT");
+    let writerAccountId;
+    try {
+      writerAccountId = await hasNft(WRITER_NFT_ID, writerNftSerial);
+      if (!writerAccountId) {
+        throw new Error("Could not find owner of writer NFT");
+      }
+
+    } catch (error) {
+      return createResponse(500, "Failed to check writer NFT ownership", error);
     }
+
 
     console.log("=== Option Buy Initiated ===");
 
@@ -203,7 +207,7 @@ export const handler = async (event) => {
     return createResponse(200, "Option NFT minted", "Transaction to sign created", { signedTx: signedTxBase64 });
 
   } catch (err) {
-    return createResponse(500, "Internal Server Error", err);
+    return createResponse(500, "Failed to mint buyer NFT", err);
   }
 }
 

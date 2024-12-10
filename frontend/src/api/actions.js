@@ -1,6 +1,6 @@
 // Buy option lambda
 export async function buyOption(writerNftSerial, optionBuyerId) {
-    const dynamoResponse = await fetch("https://cq7w2aflxurbr2vzcf3ms2lsnq0ondne.lambda-url.us-east-1.on.aws/", {
+    const dynamoResponse = await fetch("https://tq367v24galhpfcbvhgeoa2eeq0uinzr.lambda-url.us-east-1.on.aws/", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -69,7 +69,7 @@ export async function writeOption(writerAccountId, tokenId, amount, strikePrice,
 
 
 // Upload option to Dynamo Lambda
-export async function uploadOptionToDynamo(serialNumber, writerAccountId, tokenId, amount, strikePrice, isCall, premium, expiry) {
+export async function uploadOptionToDynamo(serialNumber, transactionId, writerAccountId, tokenId, amount, strikePrice, isCall, premium, expiry) {
     const dynamoResponse = await fetch("https://ulmpmp4ofacn343malpxfzgxeq0qbwba.lambda-url.us-east-1.on.aws/", {
         method: 'POST',
         headers: {
@@ -77,6 +77,7 @@ export async function uploadOptionToDynamo(serialNumber, writerAccountId, tokenI
         },
         body: JSON.stringify({
             serialNumber,
+            transactionId,
             writerAccountId,
             tokenId,
             amount,
