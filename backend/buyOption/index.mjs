@@ -53,12 +53,12 @@ export const handler = async (event) => {
   try {
     const body = JSON.parse(event.body);
 
+    writerNftSerial = body.writerNftSerial.split('#')[1];
+    optionBuyerId = body.optionBuyerId;
+
     if (!body.writerNftSerial || !body.optionBuyerId) {
       throw new Error("Missing required parameters.");
     }
-
-    writerNftSerial = body.writerNftSerial.split('#')[1];
-    optionBuyerId = body.optionBuyerId;
 
   } catch (error) {
     return createResponse(400, 'Bad Request', 'Error parsing request body.', error);
