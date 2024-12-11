@@ -111,3 +111,22 @@ export async function addBuyerToOptionDynamo(buyerId, writerNftSerial) {
 
     return result;
 }
+
+
+// Check NFT ownership and return serials 
+export async function getNftsOwned(accountId, nftId)  {
+    const dynamoResponse = await fetch("https://vglk6vrt7h4ywgsyjcuzhwhkm40uhqgx.lambda-url.us-east-1.on.aws/", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            accountId,
+            nftId
+        }),
+    });
+
+    const result = await dynamoResponse.json();
+
+    return result;
+}
