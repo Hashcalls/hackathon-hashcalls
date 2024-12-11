@@ -1,3 +1,10 @@
+import {
+    TokenWipeTransaction,
+    Client,
+    TokenMintTransaction,
+    TransferTransaction,
+    PrivateKey,
+  } from "@hashgraph/sdk";
 import AWS from 'aws-sdk';
 
 const dynamo = new AWS.DynamoDB.DocumentClient();
@@ -33,7 +40,7 @@ export const handler = async (event) => {
     }
 
 
-    // TODO: Wipe all expired NFTs
+    // TODO: Wipe all expired NFTs, return escrowed collateral 
     try {
 
 
