@@ -20,6 +20,10 @@ import "./styles/App.css";
 import { signTx } from "./components/hedera/signTx.js";
 import { writeOption } from "../api/actions.js";
 import { WalletContext } from './components/WalletProvider.jsx';
+import ErrorScreen from '@/app/components/ErrorScreen.jsx'
+import LoadingScreen from '@/app/components/LoadingScreen.jsx'
+import SuccessPage from "@/app/components/success-page.jsx";
+
 
 export default function CreatePage() {
   const [token, setToken] = useState("");
@@ -30,6 +34,9 @@ export default function CreatePage() {
   const [optionType, setOptionType] = useState("call");
   const { accountId, walletData } = useContext(WalletContext)
 
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
+
   async function createOption() {
     if (!token || !amount || !strike || !expiry) {
       alert("Please fill in all fields.");
@@ -37,41 +44,56 @@ export default function CreatePage() {
     }
 
     const isCall = optionType === "call";
-    const writerNftSerial = await writeOption(
-      accountId,
-      token,
-      amount,
-      strike,
-      isCall,
-      premium,
-      expiry
-    );
 
-    const hashconnect = walletData[0];
-    const saveData = walletData[1];
-    const provider = hashconnect.getProvider(
-      "testnet",
-      saveData.topic,
-      accountId
-    );
-    const signer = hashconnect.getSigner(provider);
+    try {
+      const writerNftSerial = await writeOption(
+        accountId,
+        token,
+        amount,
+        strike,
+        isCall,
+        premium,
+        expiry
+      );
 
-    const transferReceipt = await signTx(
-      writerNftSerial.data.signedTx,
-      signer,
-      writerNftSerial.data.metadata,
-      provider
-    );
-    console.log("Transfer receipt:", transferReceipt);
+      const hashconnect = walletData[0];
+      const saveData = walletData[1];
+      const provider = hashconnect.getProvider(
+        "testnet",
+        saveData.topic,
+        accountId
+      );
+      const signer = hashconnect.getSigner(provider);
 
-    // Clear input fields
-    setToken("");
-    setAmount("");
-    setPremium("");
-    setStrike("");
-    setExpiry("");
+      const transferReceipt = await signTx(
+        writerNftSerial.data.signedTx,
+        signer,
+        writerNftSerial.data.metadata,
+        provider
+      );
+      console.log("Transfer receipt:", transferReceipt);
 
-    alert("Option created successfully!");
+      // Clear input fields
+      setToken("");
+      setAmount("");
+      setPremium("");
+      setStrike("");
+      setExpiry("");
+
+      return <SuccessPage />
+
+    } catch (err) {
+      console.error("Error processing create option:", err);
+      alert("Failed to create the option. Please try again.");
+    }
+  }
+
+  if (isLoading) {
+    return <LoadingScreen />
+  }
+
+  if (error) {
+    return <ErrorScreen message={error} />
   }
 
   return (

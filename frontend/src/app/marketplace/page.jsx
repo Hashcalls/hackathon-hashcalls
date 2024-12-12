@@ -7,18 +7,32 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/ca
 import { Button } from '@/app/components/ui/button'
 import { WalletContext } from '../components/WalletProvider.jsx'
 import { getBuyableOptions } from '../../api/data.js'
+import ErrorScreen from '@/app/components/ErrorScreen.jsx'
+import LoadingScreen from '@/app/components/LoadingScreen.jsx'
+import SuccessPage from "@/app/components/success-page.jsx";
+
 
 export default function Marketplace() {
   const { accountId, walletData } = useContext(WalletContext)
   const [options, setOptions] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     async function fetchOptions() {
-      const data = await getBuyableOptions();
-      setOptions(data.data);
+      try {
+        setIsLoading(true)
+        const data = await getBuyableOptions()
+        setOptions(data.data)
+      } catch (err) {
+        console.error("Error fetching options:", err)
+        setError("Failed to load options. Please try again.")
+      } finally {
+        setIsLoading(false)
+      }
     }
-    fetchOptions();
-  }, []);
+    fetchOptions()
+  }, [])
 
   async function handleBuyOption(index) {
     if (!accountId || !walletData) {
@@ -27,24 +41,38 @@ export default function Marketplace() {
     }
 
     const selectedOption = options[index]
-    const serialNumber = await buyOption(
-      selectedOption.PK,
-      accountId
-    )
+    try {
+      const serialNumber = await buyOption(
+        selectedOption.PK,
+        accountId
+      )
 
-    const hashconnect = walletData[0]
-    const saveData = walletData[1]
-    const provider = hashconnect.getProvider("testnet", saveData.topic, accountId)
-    const signer = hashconnect.getSigner(provider)
+      const hashconnect = walletData[0]
+      const saveData = walletData[1]
+      const provider = hashconnect.getProvider("testnet", saveData.topic, accountId)
+      const signer = hashconnect.getSigner(provider)
 
-    const transferReceipt = await signBuyTx(
-      serialNumber.data.signedTx,
-      signer,
-      accountId,
-      selectedOption.PK,
-      provider
-    )
-    console.log("Transfer receipt:", transferReceipt)
+      const transferReceipt = await signBuyTx(
+        serialNumber.data.signedTx,
+        signer,
+        accountId,
+        selectedOption.PK,
+        provider
+      )
+      console.log("Transfer receipt:", transferReceipt)
+      return <SuccessPage />
+
+    } catch (err) {
+      setError("Failed to buy option. Please try again.", err)
+    }
+  }
+
+  if (isLoading) {
+    return <LoadingScreen />
+  }
+
+  if (error) {
+    return <ErrorScreen message={error} />
   }
 
   return (
