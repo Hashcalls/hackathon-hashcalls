@@ -17,6 +17,7 @@ export default function Marketplace() {
   const [options, setOptions] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [isSuccess, setIsSuccess] = useState(false)
 
   useEffect(() => {
     async function fetchOptions() {
@@ -52,15 +53,15 @@ export default function Marketplace() {
       const provider = hashconnect.getProvider("testnet", saveData.topic, accountId)
       const signer = hashconnect.getSigner(provider)
 
-      const transferReceipt = await signBuyTx(
+      await signBuyTx(
         serialNumber.data.signedTx,
         signer,
         accountId,
         selectedOption.PK,
         provider
       )
-      console.log("Transfer receipt:", transferReceipt)
-      return <SuccessPage />
+
+      setIsSuccess(true); // Show success screen
 
     } catch (err) {
       setError("Failed to buy option. Please try again.", err)
@@ -73,6 +74,10 @@ export default function Marketplace() {
 
   if (error) {
     return <ErrorScreen message={error} />
+  }
+
+  if (isSuccess) {
+    return <SuccessPage message="You have bought an option!" />;
   }
 
   return (

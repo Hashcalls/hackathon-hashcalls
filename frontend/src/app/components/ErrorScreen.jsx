@@ -3,7 +3,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 
-export default function ErrorScreen() {
+export default function ErrorScreen({ message = "An error occurred." }) {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
       <motion.div
@@ -42,12 +42,13 @@ export default function ErrorScreen() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5, duration: 0.5 }}
       >
-        Oops! Something went wrong.
+        {message}
       </motion.p>
       <motion.button
         className="px-6 py-3 bg-red-500 text-white rounded-full font-semibold hover:bg-red-600 transition-colors"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
+        onClick={() => window.location.reload()}
       >
         Go Back
       </motion.button>

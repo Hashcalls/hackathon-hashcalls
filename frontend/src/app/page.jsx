@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Card,
@@ -19,9 +19,9 @@ import {
 import "./styles/App.css";
 import { signTx } from "./components/hedera/signTx.js";
 import { writeOption } from "../api/actions.js";
-import { WalletContext } from './components/WalletProvider.jsx';
-import ErrorScreen from '@/app/components/ErrorScreen.jsx'
-import LoadingScreen from '@/app/components/LoadingScreen.jsx'
+import { WalletContext } from "./components/WalletProvider.jsx";
+import ErrorScreen from "@/app/components/ErrorScreen.jsx";
+import LoadingScreen from "@/app/components/LoadingScreen.jsx";
 import SuccessPage from "@/app/components/success-page.jsx";
 
 
@@ -32,18 +32,34 @@ export default function CreatePage() {
   const [strike, setStrike] = useState("");
   const [expiry, setExpiry] = useState("");
   const [optionType, setOptionType] = useState("call");
-  const { accountId, walletData } = useContext(WalletContext)
+  const { accountId, walletData } = useContext(WalletContext);
 
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  useEffect(() => {
+    // Reset loading/error state when component mounts
+    setIsLoading(false);
+    setError(null);
+    setIsSuccess(false);
+  }, []);
 
   async function createOption() {
+    if (!walletData || !walletData.length || !accountId) {
+      setError("Wallet is not connected. Please connect your wallet and try again.");
+      return;
+    }
+
     if (!token || !amount || !strike || !expiry) {
-      alert("Please fill in all fields.");
+      setError("Please fill out all fields.");
       return;
     }
 
     const isCall = optionType === "call";
+
+    setIsLoading(true); // Start loading
+    setError(null); // Clear any previous error
 
     try {
       const writerNftSerial = await writeOption(
@@ -65,13 +81,12 @@ export default function CreatePage() {
       );
       const signer = hashconnect.getSigner(provider);
 
-      const transferReceipt = await signTx(
+      await signTx(
         writerNftSerial.data.signedTx,
         signer,
         writerNftSerial.data.metadata,
         provider
       );
-      console.log("Transfer receipt:", transferReceipt);
 
       // Clear input fields
       setToken("");
@@ -80,20 +95,26 @@ export default function CreatePage() {
       setStrike("");
       setExpiry("");
 
-      return <SuccessPage />
+      setIsSuccess(true); // Show success screen
 
     } catch (err) {
-      console.error("Error processing create option:", err);
-      alert("Failed to create the option. Please try again.");
+      setError(err.message || "Failed to create the option. Please try again.");
+
+    } finally {
+      setIsLoading(false); // Stop loading
     }
   }
 
   if (isLoading) {
-    return <LoadingScreen />
+    return <LoadingScreen />;
   }
 
   if (error) {
-    return <ErrorScreen message={error} />
+    return <ErrorScreen message={error} />;
+  }
+
+  if (isSuccess) {
+    return <SuccessPage message={`You have created an ${optionType} option for ${token} for ${amount} with strike price of ${strike} with a premium of ${premium} that expires on ${expiry}. View this NFT in your wallet.`} />;
   }
 
   return (
@@ -171,7 +192,7 @@ export default function CreatePage() {
                 </Label>
                 <Input
                   id="expiry-date"
-                  // type="datetime-local"
+                  type="date"
                   value={expiry}
                   onChange={(e) => setExpiry(e.target.value)}
                   className="bg-gray-700 text-white"

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 
-export default function SuccessPage() {
+export default function SuccessPage({ message = "Your action has been completed successfully." }) {
   return (
     (<div
       className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center p-4">
@@ -22,14 +22,16 @@ export default function SuccessPage() {
         </motion.div>
         <h1 className="text-4xl font-bold text-center text-white mb-4">Success!</h1>
         <p className="text-xl text-center text-gray-200 mb-8">
-          Your action has been completed successfully.
+          {message}
         </p>
         <div className="flex justify-center">
-          <Link
-            href="/"
-            className="bg-white text-purple-600 font-semibold py-3 px-6 rounded-full hover:bg-opacity-90 transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50">
-            Back to Home
-          </Link>
+          <button onClick={() => window.location.reload()}>
+            <Link
+              href="/"
+              className="bg-white text-purple-600 font-semibold py-3 px-6 rounded-full hover:bg-opacity-90 transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50">
+              Back to Home
+            </Link>
+          </button>
         </div>
       </motion.div>
       <CircuitAnimation />
