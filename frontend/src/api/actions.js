@@ -18,23 +18,20 @@ export async function buyOption(writerNftSerial, optionBuyerId) {
 
 
 // Excercise option lambda
-export async function exerciseOption(optionBuyerId, premium, writerNftSerial, walletData, tokenId, buyerNftSerial, buyerId, strikePrice, payout, isCall) {
+export async function exerciseOption(tokenId, buyerNftSerial, buyerId, strikePrice, payout, writerNftSerial, isCall) {
     const dynamoResponse = await fetch("https://odamc4dmgjxihjzt74hbrh6yo40phffh.lambda-url.us-east-1.on.aws/", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            optionBuyerId,
-            premium,
-            writerNftSerial,
-            walletData,
             tokenId,
             buyerNftSerial,
             buyerId,
             strikePrice,
             payout,
-            isCall
+            writerNftSerial,
+            isCall,
         }),
     });
 
@@ -114,7 +111,7 @@ export async function addBuyerToOptionDynamo(buyerId, writerNftSerial) {
 
 
 // Check NFT ownership and return serials 
-export async function getNftsOwned(accountId, nftId)  {
+export async function getNftsOwned(accountId, nftId) {
     const dynamoResponse = await fetch("https://vglk6vrt7h4ywgsyjcuzhwhkm40uhqgx.lambda-url.us-east-1.on.aws/", {
         method: 'POST',
         headers: {
