@@ -13,15 +13,15 @@ import SuccessPage from "@/app/components/success-page.jsx";
 import { signTx } from '../components/hedera/signTx.js'
 
 const mockWrittenNFTs = [
-  { id: 1, name: 'CryptoPunk #3100', tokenId: 'PUNK3100', price: 5, expiryDate: '2023-12-31' },
-  { id: 2, name: 'Bored Ape #7495', tokenId: 'BAYC7495', price: 10, expiryDate: '2024-01-31' },
-  { id: 3, name: 'Azuki #9361', tokenId: 'AZUKI9361', price: 3, expiryDate: '2023-11-30' },
+  // { id: 1, name: 'CryptoPunk #3100', tokenId: 'PUNK3100', price: 5, expiryDate: '2023-12-31' },
+  // { id: 2, name: 'Bored Ape #7495', tokenId: 'BAYC7495', price: 10, expiryDate: '2024-01-31' },
+  // { id: 3, name: 'Azuki #9361', tokenId: 'AZUKI9361', price: 3, expiryDate: '2023-11-30' },
 ]
 
 const mockEarnings = {
-  total: 25.5,
-  thisMonth: 7.2,
-  pendingClaims: 3.1,
+  // total: 25.5,
+  // thisMonth: 7.2,
+  // pendingClaims: 3.1,
 }
 
 export default function VaultPage() {
@@ -99,15 +99,15 @@ export default function VaultPage() {
     const selectedOption = options[index];
     try {
       // Call your lambda/function to initiate exercise, passing needed params
-      const transaction = await exerciseOption({
-        tokenId: selectedOption.tokenId,
-        buyerNftSerial: selectedOption.buyerNftSerial,
-        buyerId: accountId,
-        strikePrice: selectedOption.strikePrice,
-        payout: selectedOption.amount,
-        writerNftSerial: selectedOption.PK,
-        isCall: selectedOption.isCall
-      });
+      const transaction = await exerciseOption(
+        selectedOption.tokenId,
+        selectedOption.buyerNftSerial,
+        accountId,
+        selectedOption.strikePrice,
+        selectedOption.amount,
+        selectedOption.PK,
+        selectedOption.isCall
+      );
 
       const hashconnect = walletData[0]
       const saveData = walletData[1]
@@ -258,7 +258,7 @@ export default function VaultPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.6 }}
           >
-            <Card className="bg-gray-800 border-green-500">
+            {/* <Card className="bg-gray-800 border-green-500">
               <CardHeader>
                 <CardTitle className="text-2xl font-bold text-white">Your Earnings</CardTitle>
               </CardHeader>
@@ -281,7 +281,7 @@ export default function VaultPage() {
                   Claim Earnings
                 </Button>
               </CardContent>
-            </Card>
+            </Card> */}
           </motion.div>
         </div>
       </div>
