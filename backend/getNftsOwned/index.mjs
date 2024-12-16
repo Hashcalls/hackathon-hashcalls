@@ -1,5 +1,12 @@
+import AWS from 'aws-sdk';
 
-// export async function getNftSerialsOwned(accountId, nftId) {
+// Initialise resources.
+const dynamoDb = new AWS.DynamoDB.DocumentClient();
+
+// Global variables
+const DEBUG = process.env.DEBUG;
+
+
 export const handler = async (event) => {
     if (event.requestContext) {
         // Preflight request handling for CORS.
@@ -11,7 +18,7 @@ export const handler = async (event) => {
     }
 
 
-    // Take params from the event body
+    // Parse and validate the request body
     let accountId, nftId;
     try {
         const body = JSON.parse(event.body);
@@ -19,23 +26,20 @@ export const handler = async (event) => {
         accountId = body.accountId;
         nftId = body.nftId;
 
-        if (!body.accountId || !body.nftId) {
+        if (!accountId || !nftId) {
             throw new Error("Missing required parameters.");
         }
 
     } catch (error) {
-        return createResponse(400, 'Bad Request', 'Error parsing request body.', error);
+        return createResponse(400, 'Bad Request', 'Error parsing request body.', error.message);
     }
 
 
-    // Fetch NFTs owned by the account
+    // Fetch NFTs serials owned by the account
+    let serials;
     try {
-        if (!accountId || !nftId) {
-            throw new Error("Account ID and NFT ID are required parameters.");
-        }
-
         const url = `${process.env.REACT_APP_HEDERA_BASE_URL}/accounts/${accountId}/nfts?token.id=${nftId}`;
-        console.log(`Fetching NFT data from: ${url}`);
+        DEBUG && console.log(`Fetching NFT data from: ${url}`);
 
         const response = await fetch(url);
         if (!response.ok) {
@@ -49,16 +53,58 @@ export const handler = async (event) => {
 
         if (data.nfts.length === 0) {
             // No NFTs found for the account
-            return { isNftOwner: false, serials: [] };
+            return createResponse(200, 'OK', 'No NFTs found for the account.', { isNftOwner: false, serials: [] });
         }
 
         // Extract serial numbers of owned NFTs
-        const serials = data.nfts.map((nft) => nft.serial_number);
-        return { isNftOwner: true, serials };
+        serials = data.nfts.map((nft) => nft.serial_number);
+        DEBUG && console.log('NFTs serials:', serials);
+
     } catch (error) {
-        console.error("Error fetching NFT data:", error.message);
-        return { isNftOwner: false, serials: [] }; // Ensure a consistent return structure
+        return createResponse(500, 'Internal Server Error', 'Failed to fetch NFT data.', error.message);
     }
+
+
+    // Fetch NFTs metadata from DynamoDB
+    let metadata = {};
+    try {
+        const queries = serials.map(serial => {
+            const params = {
+                TableName: process.env.DYNAMODB_TABLE,
+                IndexName: 'buyerNftSerial-index',
+                KeyConditionExpression: 'buyerNftSerial = :val',
+                ExpressionAttributeValues: {
+                    ':val': Number(serial)
+                }
+            };
+            return dynamoDb.query(params).promise();
+        });
+
+        const queryResults = await Promise.all(queries);
+        const allItems = queryResults.flatMap(res => res.Items);
+        metadata = allItems.map(item => {
+            return {
+                PK: item.PK.split('#')[1],
+                tokenId: item.tokenId,
+                amount: item.amount,
+                premium: item.premium,
+                strikePrice: item.strikePrice,
+                expiry: item.expiry,
+                isCall: item.isCall,
+                buyerId: item.buyerId,
+                buyerNftSerial: item.buyerNftSerial,
+                writerAccountId: item.writerAccountId,
+                transactionId: item.transactionId,
+                timestamp: item.timestamp
+            };
+        });
+
+    } catch (error) {
+        return createResponse(500, 'Internal Server Error', 'Failed to fetch NFT metadata from DynamoDB.', error.message);
+    }
+
+    // Return the response with metadata
+    return createResponse(200, 'OK', 'NFT metadata fetched successfully.', metadata);
 };
 
 

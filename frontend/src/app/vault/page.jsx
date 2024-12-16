@@ -1,14 +1,16 @@
 "use client"
 
+import { useEffect, useState, useContext } from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card'
 import { Button } from '@/app/components/ui/button'
-
-const mockOwnedOptions = [
-  { id: 1, tokenId: 'ETH', amount: 1, strikePrice: 2000, expiryDate: '2023-12-31', type: 'call' },
-  { id: 2, tokenId: 'BTC', amount: 0.5, strikePrice: 30000, expiryDate: '2023-12-31', type: 'put' },
-  { id: 3, tokenId: 'LINK', amount: 100, strikePrice: 10, expiryDate: '2023-12-31', type: 'call' },
-]
+import { getNftsOwned } from '@/api/user'
+import { exerciseOption } from '@/api/actions'
+import { WalletContext } from "../components/WalletProvider.jsx";
+import ErrorScreen from '@/app/components/ErrorScreen.jsx'
+import LoadingScreen from '@/app/components/LoadingScreen.jsx'
+import SuccessPage from "@/app/components/success-page.jsx";
+import { signTx } from '../components/hedera/signTx.js'
 
 const mockWrittenNFTs = [
   { id: 1, name: 'CryptoPunk #3100', tokenId: 'PUNK3100', price: 5, expiryDate: '2023-12-31' },
@@ -23,6 +25,124 @@ const mockEarnings = {
 }
 
 export default function VaultPage() {
+  const { accountId, walletData } = useContext(WalletContext)
+  const [options, setOptions] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [isSuccess, setIsSuccess] = useState(false)
+  const [hasFetchedOptions, setHasFetchedOptions] = useState(false)
+
+  useEffect(() => {
+    if (!accountId && !hasFetchedOptions) {
+      setError("Please connect your wallet first.")
+      setIsLoading(false)
+      return
+    }
+
+    if (!accountId && hasFetchedOptions) {
+      // If we previously fetched options successfully, do nothing here.
+      // Don't revert to "connect your wallet" error.
+      return
+    }
+
+    async function fetchOptions() {
+      try {
+        setIsLoading(true)
+        setError(null)
+        const data = await getNftsOwned(accountId, '0.0.5185025')
+        console.log("Fetched options:", data)
+
+        const metadata = data.data || {}
+        const serials = Object.keys(metadata)
+
+        if (serials.length === 0) {
+          // No NFTs, no error
+          setOptions([])
+        } else {
+          const fetchedOptions = serials.map((serial) => {
+            const meta = metadata[serial]
+            if (!meta) return null
+            return {
+              PK: meta.PK,
+              tokenId: meta.tokenId,
+              isCall: meta.isCall,
+              amount: meta.amount,
+              strikePrice: meta.strikePrice,
+              expiryDate: meta.expiry,
+              buyerNftSerial: meta.buyerNftSerial
+            }
+          }).filter(Boolean)
+          setOptions(fetchedOptions)
+        }
+
+        setHasFetchedOptions(true) // Mark that we have successfully fetched
+      } catch (err) {
+        console.error("Error fetching options:", err)
+        setError("Failed to load options. Please try again.")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    if (accountId) {
+      fetchOptions()
+    }
+
+  }, [accountId, hasFetchedOptions])
+
+
+  async function handleExcerciseOption(index) {
+    if (!accountId || !walletData) {
+      return setError("Failure. Please connect wallet")
+    }
+
+    const selectedOption = options[index];
+    try {
+      // Call your lambda/function to initiate exercise, passing needed params
+      const transaction = await exerciseOption({
+        tokenId: selectedOption.tokenId,
+        buyerNftSerial: selectedOption.buyerNftSerial,
+        buyerId: accountId,
+        strikePrice: selectedOption.strikePrice,
+        payout: selectedOption.amount,
+        writerNftSerial: selectedOption.PK,
+        isCall: selectedOption.isCall
+      });
+
+      const hashconnect = walletData[0]
+      const saveData = walletData[1]
+      const provider = hashconnect.getProvider("testnet", saveData.topic, accountId)
+      const signer = hashconnect.getSigner(provider)
+
+      // Sign and submit the transaction
+      await signTx(
+        transaction.data.signedTx,
+        signer,
+        accountId,
+        selectedOption.PK,
+        provider
+      )
+
+      setIsSuccess(true);
+
+    } catch (error) {
+      console.error("Error exercising option:", error);
+      setError("Failed to exercise option. Please try again.")
+    }
+  }
+
+  if (isLoading) {
+    return <LoadingScreen />
+  }
+
+  if (error) {
+    return <ErrorScreen message={error} />
+  }
+
+  if (isSuccess) {
+    return <SuccessPage message="You have exercised an option!" />;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900 p-8">
       <motion.h1
@@ -44,9 +164,9 @@ export default function VaultPage() {
               <CardTitle className="text-2xl font-bold text-white">Your Options</CardTitle>
             </CardHeader>
             <CardContent>
-              {mockOwnedOptions.map((option, index) => (
+              {options.map((option, index) => (
                 <motion.div
-                  key={option.id}
+                  key={option.PK}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: index * 0.1 }}
@@ -55,8 +175,10 @@ export default function VaultPage() {
                     <CardContent className="p-4">
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-xl font-bold text-white">{option.tokenId}</span>
-                        <span className={`text-sm px-2 py-1 rounded ${option.type === 'call' ? 'bg-green-600' : 'bg-red-600'}`}>
-                          {option.type.toUpperCase()}
+                        <span
+                          className={`text-sm ${option.isCall ? 'text-green-400' : 'text-red-400'}`}
+                        >
+                          {option.isCall ? 'CALL' : 'PUT'}
                         </span>
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-gray-300">
@@ -72,8 +194,15 @@ export default function VaultPage() {
                           <p className="font-semibold">Expiry Date:</p>
                           <p>{option.expiryDate}</p>
                         </div>
+                        <div>
+                          <p className="font-lighter text-xs">serials:</p>
+                          <p>BuyerNftSerial: {option.buyerNftSerial} WriterNftSerial: {option.PK}</p>
+                        </div>
                       </div>
-                      <Button className="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 transition-colors">
+                      <Button
+                        onClick={() => handleExcerciseOption(index)}
+                        className="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 transition-colors"
+                      >
                         Execute Option
                       </Button>
                     </CardContent>
@@ -159,4 +288,3 @@ export default function VaultPage() {
     </div>
   )
 }
-

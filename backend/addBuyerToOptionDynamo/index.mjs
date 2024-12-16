@@ -14,16 +14,17 @@ export const handler = async (event) => {
 
 
     // Take params from the event body
-    let writerNftSerial, buyerId;
+    let writerNftSerial, buyerId, buyerNftSerial;
     try {
         const body = JSON.parse(event.body);
 
-        if (!body.writerNftSerial || !body.buyerId) {
+        if (!body.writerNftSerial || !body.buyerId || !body.buyerNftSerial) {
             throw new Error("Missing required parameters.");
         }
 
         writerNftSerial = body.writerNftSerial;
         buyerId = body.buyerId;
+        buyerNftSerial = body.buyerNftSerial;
 
     } catch (error) {
         return createResponse(400, 'Bad Request', 'Error parsing request body.', error);
@@ -38,9 +39,10 @@ export const handler = async (event) => {
                 PK: writerNftSerial,
                 SK: "METADATA#WRITEOPTION"
             },
-            UpdateExpression: "set buyerId = :buyerId",
+            UpdateExpression: "set buyerId = :buyerId, buyerNftSerial = :buyerNftSerial",
             ExpressionAttributeValues: {
                 ":buyerId": buyerId,
+                ":buyerNftSerial": buyerNftSerial
             },
         };
 

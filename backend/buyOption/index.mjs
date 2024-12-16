@@ -207,7 +207,7 @@ export const handler = async (event) => {
     const signedTxBytes = signedTx.toBytes();
     const signedTxBase64 = Buffer.from(signedTxBytes).toString("base64");
 
-    return createResponse(200, "Option NFT minted", "Transaction to sign created", { signedTx: signedTxBase64 });
+    return createResponse(200, "Option NFT minted", "Transaction to sign created", { signedTx: signedTxBase64, serialNumber });
 
   } catch (err) {
     return createResponse(500, "Failed to mint buyer NFT", err);

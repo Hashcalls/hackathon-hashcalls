@@ -31,7 +31,7 @@ export async function signTx(txBase64, signer, metadata, provider) {
 };
 
 
-export async function signBuyTx(txBase64, signer, writerNftSerial, buyerId, provider) {
+export async function signBuyTx(txBase64, signer, writerNftSerial, buyerId, provider, buyerNftSerial) {
     // Decode Base64 to bytes
     const txBytes = Buffer.from(txBase64, "base64");
 
@@ -49,7 +49,7 @@ export async function signBuyTx(txBase64, signer, writerNftSerial, buyerId, prov
     if (receipt.status.toString() === "SUCCESS") {
         console.log("Transaction succeeded");
 
-        addBuyerToOptionDynamo(writerNftSerial, buyerId);
+        addBuyerToOptionDynamo(writerNftSerial, buyerId, buyerNftSerial);
 
     } else {
         console.log("Transaction failed");

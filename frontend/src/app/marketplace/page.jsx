@@ -37,8 +37,7 @@ export default function Marketplace() {
 
   async function handleBuyOption(index) {
     if (!accountId || !walletData) {
-      alert("Please connect your wallet first.")
-      return
+      return setError("Failure. Please connect wallet")
     }
 
     const selectedOption = options[index]
@@ -58,7 +57,8 @@ export default function Marketplace() {
         signer,
         accountId,
         selectedOption.PK,
-        provider
+        provider,
+        serialNumber.data.serialNumber
       )
 
       setIsSuccess(true); // Show success screen
