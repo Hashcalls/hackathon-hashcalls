@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/ca
 import { Button } from '@/app/components/ui/button'
 import { getNftsOwned } from '@/api/user'
 import { exerciseOption } from '@/api/actions'
+import { wipeExpiredOptionNfts } from '@/api/actions'
 import { WalletContext } from "../components/WalletProvider.jsx";
 import ErrorScreen from '@/app/components/ErrorScreen.jsx'
 import LoadingScreen from '@/app/components/LoadingScreen.jsx'
@@ -49,7 +50,7 @@ export default function VaultPage() {
       try {
         setIsLoading(true)
         setError(null)
-        const data = await getNftsOwned(accountId, '0.0.5185025')
+        const data = await getNftsOwned(accountId, '0.0.5275656')
         console.log("Fetched options:", data)
 
         const metadata = data.data || {}
@@ -122,6 +123,9 @@ export default function VaultPage() {
         selectedOption.PK,
         provider
       )
+
+      //TODO - Make this conditional on the success of user signing transaction
+      await wipeExpiredOptionNfts(selectedOption.PK, selectedOption.buyerNftSerial, selectedOption.strikePrice, selectedOption.tokenId, selectedOption.amount, selectedOption.isCall)
 
       setIsSuccess(true);
 
