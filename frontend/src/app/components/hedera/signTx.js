@@ -76,7 +76,7 @@ export async function signExerciseTx(txBase64, signer, provider, buyerNftSerial,
     // If signed, unpack metadata object and upload to Dynamo
     if (receipt.status.toString() === "SUCCESS") {
         console.log("Transaction succeeded");
-        wipeExercised(buyerNftSerial, writerNftSerial);
+        wipeExercised(writerNftSerial, buyerNftSerial);
 
     } else {
         console.log("Transaction failed");

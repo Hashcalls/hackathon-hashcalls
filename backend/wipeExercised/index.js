@@ -9,8 +9,8 @@ import {
 import AWS from "aws-sdk";
 
 // Global variables
-const escrowAccountId = AccountId.fromString(process.env.REACT_APP_ESCROW_ID);
-const k = PrivateKey.fromStringECDSA(process.env.REACT_APP_ESCROW_KEY);
+const escrowAccountId = process.env.REACT_APP_ESCROW_ID;
+const k = process.env.REACT_APP_ESCROW_KEY;
 const writerNftId = process.env.REACT_APP_WRITER_NFT_ID;
 const buyerNftId = process.env.REACT_APP_BUYER_NFT_ID;
 
@@ -19,7 +19,7 @@ const hasNft = async (NftId, NftSerial) => {
   const response = await fetch(
     "https://5re3jroxrqvlb5l7mlymcrhuo40tjlxq.lambda-url.us-east-1.on.aws/",
     {
-      method: "GET",
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
