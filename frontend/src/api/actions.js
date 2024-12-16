@@ -151,14 +151,10 @@ export async function addBuyerToOptionDynamo(
   return result;
 }
 
-// Wipe expired option NFTs after exercise
-export async function wipeExpiredOptionNfts(
+// Wipe option NFTs after exercise
+export async function wipeExercised(
   writerNftSerial,
-  buyerNftSerial,
-  strikePrice,
-  tokenId,
-  tokenAmount,
-  isCall
+  buyerNftSerial
 ) {
   const dynamoResponse = await fetch(
     "https://x37szabr2g3icdnujs56juxa7u0zggaa.lambda-url.us-east-1.on.aws/",
@@ -170,11 +166,9 @@ export async function wipeExpiredOptionNfts(
       body: JSON.stringify({
         writerNftSerial,
         buyerNftSerial,
-        strikePrice,
-        tokenId,
-        tokenAmount,
-        isCall,
       }),
     }
   );
+  const result = await dynamoResponse.json();
+  return result;
 }

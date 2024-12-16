@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/ca
 import { Button } from '@/app/components/ui/button'
 import { getNftsOwned } from '@/api/user'
 import { exerciseOption } from '@/api/actions'
-import { wipeExpiredOptionNfts } from '@/api/actions'
 import { WalletContext } from "../components/WalletProvider.jsx";
 import ErrorScreen from '@/app/components/ErrorScreen.jsx'
 import LoadingScreen from '@/app/components/LoadingScreen.jsx'
@@ -119,9 +118,10 @@ export default function VaultPage() {
       await signExerciseTx(
         transaction.data.signedTx,
         signer,
-        accountId,
-        selectedOption.PK,
-        provider
+        provider,
+        selectedOption.buyerNftSerial,
+        selectedOption.PK
+
       )
 
 

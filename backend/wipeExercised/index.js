@@ -51,25 +51,14 @@ export const handler = async (event) => {
     }
   }
   var writerNftSerial,
-    buyerNftSerial,
-    strikePrice,
-    tokenId,
-    tokenAmount,
-    isCall;
+    buyerNftSerial
   try {
     const body = JSON.parse(event.body);
     writerNftSerial = body.writerNftSerial;
     buyerNftSerial = body.buyerNftSerial;
-    strikePrice = body.strikePrice;
-    tokenId = body.tokenId;
-    tokenAmount = body.tokenAmount;
-    isCall = body.isCall;
     if (
       !writerNftSerial ||
-      !tokenId ||
-      !tokenAmount ||
-      !strikePrice ||
-      !isCall
+      !buyerNftSerial
     ) {
       throw new Error("Missing required parameters.");
     }
