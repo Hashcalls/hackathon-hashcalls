@@ -60,7 +60,7 @@ export const handler = async (event) => {
   const metadata = {
     name: `${optionType} Writer NFT`,
     description: `This NFT represents the writer position of a HashCalls ${optionType.toLowerCase()} option`,
-    creator: "JBuilds",
+    creator: "HashCalls",
     image: imageUrl,
     type: "image/svg+xml",
     attributes: [
