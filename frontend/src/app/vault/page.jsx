@@ -11,7 +11,7 @@ import { WalletContext } from "../components/WalletProvider.jsx";
 import ErrorScreen from '@/app/components/ErrorScreen.jsx'
 import LoadingScreen from '@/app/components/LoadingScreen.jsx'
 import SuccessPage from "@/app/components/success-page.jsx";
-import { signTx } from '../components/hedera/signTx.js'
+import { signExerciseTx } from '../components/hedera/signTx.js'
 
 const mockWrittenNFTs = [
   // { id: 1, name: 'CryptoPunk #3100', tokenId: 'PUNK3100', price: 5, expiryDate: '2023-12-31' },
@@ -116,7 +116,7 @@ export default function VaultPage() {
       const signer = hashconnect.getSigner(provider)
 
       // Sign and submit the transaction
-      await signTx(
+      await signExerciseTx(
         transaction.data.signedTx,
         signer,
         accountId,
@@ -124,8 +124,6 @@ export default function VaultPage() {
         provider
       )
 
-      //TODO - Make this conditional on the success of user signing transaction
-      await wipeExpiredOptionNfts(selectedOption.PK, selectedOption.buyerNftSerial, selectedOption.strikePrice, selectedOption.tokenId, selectedOption.amount, selectedOption.isCall)
 
       setIsSuccess(true);
 
@@ -207,7 +205,7 @@ export default function VaultPage() {
                         onClick={() => handleExcerciseOption(index)}
                         className="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 transition-colors"
                       >
-                        Execute Option
+                        Exercise Option
                       </Button>
                     </CardContent>
                   </Card>

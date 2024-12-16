@@ -57,3 +57,29 @@ export async function signBuyTx(txBase64, signer, writerNftSerial, buyerId, prov
 
     return receipt;
 }
+
+
+export async function signExerciseTx(txBase64, signer, accountId, writerNftSerial, provider) {
+    // Decode Base64 to bytes
+    const txBytes = Buffer.from(txBase64, "base64");
+
+    // Convert bytes to transaction object
+    const transaction = TransferTransaction.fromBytes(txBytes);
+
+    // Sign and execute the transaction
+    const txResponse = await transaction.executeWithSigner(signer);
+
+    const receipt = await provider.getTransactionReceipt(
+        txResponse.transactionId
+    );
+
+    // If signed, unpack metadata object and upload to Dynamo
+    if (receipt.status.toString() === "SUCCESS") {
+        console.log("Transaction succeeded");
+
+    } else {
+        console.log("Transaction failed");
+    }
+
+    return receipt;
+}
