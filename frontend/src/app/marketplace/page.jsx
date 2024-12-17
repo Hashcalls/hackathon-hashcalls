@@ -40,6 +40,8 @@ export default function Marketplace() {
       return setError("Failure. Please connect wallet")
     }
 
+    setIsLoading(true); // Start loading
+
     const selectedOption = options[index]
     try {
       const serialNumber = await buyOption(
@@ -65,6 +67,8 @@ export default function Marketplace() {
 
     } catch (err) {
       setError("Failed to buy option. Please try again.", err)
+    } finally {
+      setIsLoading(false)
     }
   }
 

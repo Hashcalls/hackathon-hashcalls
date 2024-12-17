@@ -96,6 +96,8 @@ export default function VaultPage() {
       return setError("Failure. Please connect wallet")
     }
 
+    setIsLoading(true); // Start loading
+
     const selectedOption = options[index];
     try {
       // Call your lambda/function to initiate exercise, passing needed params
@@ -130,6 +132,8 @@ export default function VaultPage() {
     } catch (error) {
       console.error("Error exercising option:", error);
       setError("Failed to exercise option. Please try again.")
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -214,7 +218,7 @@ export default function VaultPage() {
             </CardContent>
           </Card>
         </motion.div>
-        <div className="space-y-8">
+        {/* <div className="space-y-8">
           <motion.div
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
@@ -259,8 +263,8 @@ export default function VaultPage() {
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.6 }}
-          >
-            {/* <Card className="bg-gray-800 border-green-500">
+          > */}
+        {/* <Card className="bg-gray-800 border-green-500">
               <CardHeader>
                 <CardTitle className="text-2xl font-bold text-white">Your Earnings</CardTitle>
               </CardHeader>
@@ -284,8 +288,8 @@ export default function VaultPage() {
                 </Button>
               </CardContent>
             </Card> */}
-          </motion.div>
-        </div>
+        {/* </motion.div>
+        </div> */}
       </div>
     </div>
   )
