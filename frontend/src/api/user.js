@@ -1,7 +1,7 @@
 // Has NFT Lambda
 export async function hasNFT(nftTokenId, serialNumber) {
-    const dynamoResponse = await fetch("https://5re3jroxrqvlb5l7mlymcrhuo40tjlxq.lambda-url.us-east-1.on.aws/", {
-        method: 'GET',
+    const dynamoResponse = await fetch("https://cvcjxnv5rqp2hzsavo2h7jxnci0yfbbo.lambda-url.us-east-1.on.aws/", {
+        method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },

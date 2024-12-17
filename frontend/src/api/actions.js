@@ -154,7 +154,8 @@ export async function addBuyerToOptionDynamo(
 // Wipe option NFTs after exercise
 export async function wipeExercised(
   writerNftSerial,
-  buyerNftSerial
+  buyerNftSerial,
+  writerAccountId
 ) {
   const dynamoResponse = await fetch(
     "https://x37szabr2g3icdnujs56juxa7u0zggaa.lambda-url.us-east-1.on.aws/",
@@ -166,6 +167,7 @@ export async function wipeExercised(
       body: JSON.stringify({
         writerNftSerial,
         buyerNftSerial,
+        writerAccountId,
       }),
     }
   );
