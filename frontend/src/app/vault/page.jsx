@@ -2,14 +2,14 @@
 
 import { useEffect, useState, useContext } from 'react'
 import { motion } from 'framer-motion'
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card'
-import { Button } from '@/app/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { Button } from '../components/ui/button'
 import { getNftsOwned } from '@/api/user'
 import { exerciseOption } from '@/api/actions'
 import { WalletContext } from "../components/WalletProvider.jsx";
-import ErrorScreen from '@/app/components/ErrorScreen.jsx'
-import LoadingScreen from '@/app/components/LoadingScreen.jsx'
-import SuccessPage from "@/app/components/success-page.jsx";
+import ErrorScreen from '../components/ErrorScreen.jsx'
+import LoadingScreen from '../components/LoadingScreen.jsx'
+import SuccessPage from "../components/success-page.jsx";
 import { signExerciseTx } from '../components/hedera/signTx.js'
 
 const mockWrittenNFTs = [

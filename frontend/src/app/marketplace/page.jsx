@@ -3,13 +3,13 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { buyOption } from '../../api/actions.js'
 import { signBuyTx } from '../components/hedera/signTx.js'
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card'
-import { Button } from '@/app/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { Button } from '../components/ui/button'
 import { WalletContext } from '../components/WalletProvider.jsx'
 import { getBuyableOptions } from '../../api/data.js'
-import ErrorScreen from '@/app/components/ErrorScreen.jsx'
-import LoadingScreen from '@/app/components/LoadingScreen.jsx'
-import SuccessPage from "@/app/components/success-page.jsx";
+import ErrorScreen from '../components/ErrorScreen.jsx'
+import LoadingScreen from '../components/LoadingScreen.jsx'
+import SuccessPage from "../components/success-page.jsx";
 
 
 export default function Marketplace() {

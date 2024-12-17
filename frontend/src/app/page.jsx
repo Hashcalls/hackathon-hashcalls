@@ -20,9 +20,9 @@ import "./styles/App.css";
 import { signTx } from "./components/hedera/signTx.js";
 import { writeOption } from "../api/actions.js";
 import { WalletContext } from "./components/WalletProvider.jsx";
-import ErrorScreen from "@/app/components/ErrorScreen.jsx";
-import LoadingScreen from "@/app/components/LoadingScreen.jsx";
-import SuccessPage from "@/app/components/success-page.jsx";
+import ErrorScreen from "./components/ErrorScreen.jsx";
+import LoadingScreen from "./components/LoadingScreen.jsx";
+import SuccessPage from "./components/success-page.jsx";
 
 
 export default function CreatePage() {
