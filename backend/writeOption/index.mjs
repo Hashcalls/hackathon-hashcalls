@@ -7,6 +7,7 @@ import {
   Hbar,
 } from "@hashgraph/sdk";
 import AWS from 'aws-sdk';
+import { v4 as uuidv4 } from 'uuid';
 
 
 // Global variables
@@ -53,13 +54,13 @@ export const handler = async (event) => {
 
 
   // Determine option type
-  const optionType = isCall === "Call" ? "Call" : "Put";
+  const optionType = isCall ? "Call" : "Put";
 
   // Construct metadata
   const metadata = {
     name: `${optionType} Writer NFT`,
-    description: `This NFT represents the writer position of a HashStrike ${optionType.toLowerCase()} option`,
-    creator: "JBuilds",
+    description: `This NFT represents the writer position of a HashCalls ${optionType.toLowerCase()} option`,
+    creator: "HashCalls",
     image: imageUrl,
     type: "image/svg+xml",
     attributes: [
@@ -93,24 +94,22 @@ export const handler = async (event) => {
   // Upload metadata to S3 for NFT minting
   let url;
   try {
-    const s3 = new AWS.S3();
+    const uniqueId = uuidv4().slice(0, 8);;
+
+    const s3 = new AWS.S3({ region: 'us-east-1' });
     const params = {
       Bucket: process.env.S3_BUCKET,
-      Key: `${writerAccountId}/${tokenId}.json`,
+      Key: `${writerAccountId}/${uniqueId}.json`,
       Body: JSON.stringify(metadata),
       ContentType: 'application/json',
+      ACL: 'public-read'
     };
 
     await s3.upload(params).promise();
 
     console.log(`- Metadata uploaded to S3 for writer ${writerAccountId} and token ${tokenId}`);
 
-    url = await s3.getSignedUrlPromise('getObject', {
-      Bucket: process.env.S3_BUCKET,
-      Key: `${writerAccountId}/${tokenId}.json`,
-      Expires: 60 * 60
-    });
-
+    url = `https://${process.env.S3_BUCKET}.s3.us-east-1.amazonaws.com/${writerAccountId}/${uniqueId}.json`;
 
   } catch (error) {
     return createResponse(500, "Failed to write to S3", error);
@@ -120,6 +119,7 @@ export const handler = async (event) => {
   // Generate transaction to mint NFT for the user to sign
   try {
     console.log("Minting Writer NFT...");
+    console.log(url);
 
     // Mint NFT
     const mintTx = new TokenMintTransaction()
@@ -169,7 +169,7 @@ export const handler = async (event) => {
       );
     }
 
-    const metadata = { serialNumber, transactionId: mintTxResponse.transactionId.toString(), writerAccountId, tokenId, amount, strikePrice, isCall };
+    const metadata = { serialNumber, transactionId: mintTxResponse.transactionId.toString(), writerAccountId, tokenId, amount, strikePrice, isCall, premium, expiry };
 
     const signedTx = await transferTx.sign(k);
     const signedTxBytes = signedTx.toBytes();

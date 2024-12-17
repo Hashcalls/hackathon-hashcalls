@@ -32,32 +32,56 @@ export const handler = async (event) => {
     }
 
 
-    // Query the database
+    // Query the database by itterating through the array of ids
+    let results = [];
     try {
-        let params;
-        if (!sk) {
-            params = {
-                TableName: process.env.TABLE_NAME,
-                Key: {
-                    PK: `ID#${id}`
-                }
-            };
+        for (let i = 0; i < id.length; i++) {
+            let params;
+            if (!sk) {
+                params = {
+                    TableName: process.env.TABLE_NAME,
+                    Key: {
+                        PK: `ID#${id[i]}`
+                    }
+                };
+            } else {
+                params = {
+                    TableName: process.env.TABLE_NAME,
+                    Key: {
+                        PK: `ID#${id[i]}`,
+                        SK: `METADATA#${sk}`
+                    }
+                };
+            }
 
-        } else {
-            params = {
-                TableName: process.env.TABLE_NAME,
-                Key: {
-                    PK: `ID#${id}`,
-                    SK: `METADATA#${sk}`
-                }
-            };
+            const result = await dynamoDb.get(params).promise();
+            if (result.Item) {
+                results.push(result.Item);
+            }
         }
-
-        const data = await dynamoDb.get(params).promise();
-
-        return createResponse(200, 'Success', 'Successfully fetched data.', data);
-
     } catch (error) {
-        return createResponse(500, 'Internal Server Error', 'Error fetching data.', error);
+        return createResponse(500, 'Failed to fetch data from Dynamo.', error);
     }
+
+    return createResponse(200, 'Success', 'Successfully fetched data.', results);
+};
+
+
+// Create response.
+const createResponse = (statusCode, statusDescription, message, data) => {
+    const response = {
+        statusCode,
+        statusDescription,
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            message,
+            data
+        })
+    };
+
+    statusCode === 200 ? console.log('RESPONSE:', response) : console.error('RESPONSE:', response);
+
+    return response;
 };

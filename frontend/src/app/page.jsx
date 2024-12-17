@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Card,
@@ -16,89 +16,105 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./components/ui/select";
-import walletConnectFcn from "./components/hedera/walletConnect.js";
 import "./styles/App.css";
-import signTx from "./components/hedera/signTx.js";
-import { writeOption, uploadOptionToDynamo } from "../api/actions.js";
+import { signTx } from "./components/hedera/signTx.js";
+import { writeOption } from "../api/actions.js";
+import { WalletContext } from "./components/WalletProvider.jsx";
+import ErrorScreen from "./components/ErrorScreen.jsx";
+import LoadingScreen from "./components/LoadingScreen.jsx";
+import SuccessPage from "./components/success-page.jsx";
+
 
 export default function CreatePage() {
-  const [walletData, setWalletData] = useState();
-  const [accountId, setAccountId] = useState();
-  const [connectTextSt, setConnectTextSt] = useState("🔌 Connect here...");
-  const [connectLinkSt, setConnectLinkSt] = useState("");
-
   const [token, setToken] = useState("");
   const [amount, setAmount] = useState("");
   const [premium, setPremium] = useState("");
   const [strike, setStrike] = useState("");
   const [expiry, setExpiry] = useState("");
   const [optionType, setOptionType] = useState("call");
+  const { accountId, walletData } = useContext(WalletContext);
 
-  async function connectWallet() {
-    if (accountId) {
-      setConnectTextSt(`🔌 Account ${accountId} already connected ⚡ ✅`);
-    } else {
-      const wData = await walletConnectFcn();
-      wData[0].pairingEvent.once((pairingData) => {
-        pairingData.accountIds.forEach((id) => {
-          setAccountId(id);
-          setConnectTextSt(`🔌 Account ${id} connected ⚡ ✅`);
-          setConnectLinkSt(`https://hashscan.io/#/testnet/account/${id}`);
-        });
-      });
-      setWalletData(wData);
-    }
-  }
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  useEffect(() => {
+    // Reset loading/error state when component mounts
+    setIsLoading(false);
+    setError(null);
+    setIsSuccess(false);
+  }, []);
 
   async function createOption() {
+    if (!walletData || !walletData.length || !accountId) {
+      setError("Wallet is not connected. Please connect your wallet and try again.");
+      return;
+    }
+
     if (!token || !amount || !strike || !expiry) {
-      alert("Please fill in all fields.");
+      setError("Please fill out all fields.");
       return;
     }
 
     const isCall = optionType === "call";
-    const writerNftSerial = await writeOption(
-      accountId,
-      token,
-      amount,
-      strike,
-      isCall
-    );
 
-    const hashconnect = walletData[0];
-    const saveData = walletData[1];
-    const provider = hashconnect.getProvider(
-      "testnet",
-      saveData.topic,
-      accountId
-    );
-    const signer = hashconnect.getSigner(provider);
+    setIsLoading(true); // Start loading
+    setError(null); // Clear any previous error
 
-    const transferReceipt = await signTx(
-      writerNftSerial.data.signedTx,
-      signer,
-      writerNftSerial.data.metadata,
-      provider
-    );
-    console.log("Transfer receipt:", transferReceipt);
+    try {
+      const writerNftSerial = await writeOption(
+        accountId,
+        token,
+        amount,
+        strike,
+        isCall,
+        premium,
+        expiry
+      );
 
-    if (!transferReceipt.status) {
-      // TODO: Delete NFT metadata from S3
-      return;
+      const hashconnect = walletData[0];
+      const saveData = walletData[1];
+      const provider = hashconnect.getProvider(
+        "testnet",
+        saveData.topic,
+        accountId
+      );
+      const signer = hashconnect.getSigner(provider);
 
-    } else {
-      // Upload option to DynamoDB
-      await uploadOptionToDynamo(writerNftSerial, accountId, token, amount, strike, isCall);
+      await signTx(
+        writerNftSerial.data.signedTx,
+        signer,
+        writerNftSerial.data.metadata,
+        provider
+      );
+
+      // Clear input fields
+      setToken("");
+      setAmount("");
+      setPremium("");
+      setStrike("");
+      setExpiry("");
+
+      setIsSuccess(true); // Show success screen
+
+    } catch (err) {
+      setError(err.message || "Failed to create the option. Please try again.");
+
+    } finally {
+      setIsLoading(false); // Stop loading
     }
+  }
 
-    // Clear input fields
-    setToken("");
-    setAmount("");
-    setPremium("");
-    setStrike("");
-    setExpiry("");
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
 
-    alert("Option created successfully!");
+  if (error) {
+    return <ErrorScreen message={error} />;
+  }
+
+  if (isSuccess) {
+    return <SuccessPage message={`You have created an ${optionType} option for ${token} for ${amount} with strike price of ${strike} with a premium of ${premium} that expires on ${expiry}. View this NFT in your wallet.`} />;
   }
 
   return (
@@ -116,21 +132,6 @@ export default function CreatePage() {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="mb-6 text-center">
-          <Button onClick={connectWallet} className="bg-purple-600 hover:bg-purple-700">
-            {connectTextSt}
-          </Button>
-          {connectLinkSt && (
-            <a
-              href={connectLinkSt}
-              target="_blank"
-              rel="noreferrer"
-              className="block text-white mt-2"
-            >
-              View on HashScan
-            </a>
-          )}
-        </div>
         <Card className="max-w-md mx-auto bg-gray-800 border-purple-500">
           <CardContent className="p-6">
             <form className="space-y-4">
@@ -191,7 +192,7 @@ export default function CreatePage() {
                 </Label>
                 <Input
                   id="expiry-date"
-                  type="datetime-local"
+                  type="date"
                   value={expiry}
                   onChange={(e) => setExpiry(e.target.value)}
                   className="bg-gray-700 text-white"
@@ -213,6 +214,7 @@ export default function CreatePage() {
               </div>
               <Button
                 onClick={createOption}
+                type="button"
                 className="w-full bg-purple-600 hover:bg-purple-700 transition-colors"
               >
                 Create Option

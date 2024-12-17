@@ -14,11 +14,11 @@ export const handler = async (event) => {
 
 
   // Take in body params
-  let serialNumber, transactionId, writerAccountId, tokenId, amount, strikePrice, isCall;
+  let serialNumber, transactionId, writerAccountId, tokenId, amount, strikePrice, isCall, premium, expiry;
   try {
     const body = JSON.parse(event.body);
 
-    if (!body.writerAccountId || !body.tokenId || !body.amount || !body.strikePrice || !body.isCall || !body.serialNumber || !body.transactionId) {
+    if (!body.writerAccountId || !body.tokenId || !body.amount || !body.strikePrice || !body.isCall || !body.serialNumber || !body.transactionId || !body.premium || !body.expiry) {
       throw new Error("Missing required parameters.");
     }
 
@@ -28,30 +28,12 @@ export const handler = async (event) => {
     strikePrice = body.strikePrice;
     isCall = body.isCall;
     serialNumber = body.serialNumber;
-    transactionId = body.transaction
+    transactionId = body.transactionId;
+    premium = body.premium;
+    expiry = body.expiry;
 
   } catch (error) {
     return createResponse(400, 'Bad Request', 'Error parsing request body.', error);
-  }
-
-
-  // Check if unique in DynamoDB with query pk
-  try {
-    const params = {
-      TableName: process.env.TABLE_NAME,
-      Key: {
-        PK: `ID#${serialNumber}`,
-        SK: "METADATA#WRITEOPTION"
-      },
-    };
-
-    const data = await dynamo.query(params).promise();
-
-    if (data.Items) {
-      return createResponse(400, 'Bad Request', 'Option already exists.', {});
-    }
-  } catch (error) {
-    return createResponse(500, 'Internal Server Error', 'Error querying DynamoDB.', error);
   }
 
 
@@ -67,6 +49,8 @@ export const handler = async (event) => {
         amount,
         strikePrice,
         isCall,
+        premium,
+        expiry,
         transactionId,
         timestamp: new Date().toISOString()
       }
@@ -79,4 +63,24 @@ export const handler = async (event) => {
   }
 
   return createResponse(200, 'Success', 'Option written to DynamoDB.', {});
+};
+
+
+// Create response.
+const createResponse = (statusCode, statusDescription, message, data) => {
+  const response = {
+    statusCode,
+    statusDescription,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      message,
+      data
+    })
+  };
+
+  statusCode === 200 ? console.log('RESPONSE:', response) : console.error('RESPONSE:', response);
+
+  return response;
 };
