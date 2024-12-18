@@ -6,8 +6,8 @@ import { WalletProvider } from './components/WalletProvider'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'Web3 Options Dashboard',
-  description: 'Create, trade, and execute options in the Web3 space',
+  title: 'HashCalls',
+  description: 'Create, purchase, and execute options on Hedera',
 }
 
 export default function RootLayout({ children }) {
