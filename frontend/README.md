@@ -1,10 +1,16 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# HashCalls
+
+This project is a full-stack application for managing NFT options, including buying, writing and exercising calls and puts using the Hedera Token Service. The backend service interacts with AWS DynamoDB, S3, and various Hedera Hashgraph transactions, while the frontend is built with Next.js and Tailwind CSS.
 
 ## Getting Started
 
-First, run the development server:
+### Frontend
+
+First, install packages and run the development server:
 
 ```bash
+cd frontend
+npm install
 npm run dev
 # or
 yarn dev
@@ -20,17 +26,52 @@ You can start editing the page by modifying `app/page.js`. The page auto-updates
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Learn More
+## Backend Services
 
-To learn more about Next.js, take a look at the following resources:
+### addBuyerToOptionDynamo
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Handles adding a buyer to an option in DynamoDB.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### buyOption
 
-## Deploy on Vercel
+Handles the process of buying an option, including minting NFTs and uploading metadata to S3.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### excersiseOption
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Handles exercising an option, including burning buyer NFTs and wiping writer NFTs.
+
+### getAllBuyableOptions
+
+Fetches all buyable options from the database.
+
+### getNftsOwned
+
+Fetches NFTs owned by a user.
+
+### getOptions
+
+Fetches options from the database.
+
+### hasNft
+
+Checks if a user owns a specific NFT.
+
+### uploadOptionToDynamo
+
+Uploads option data to DynamoDB.
+
+### wipeExercised
+
+Wipes exercised options from the database and burns NFTs.
+
+### wipeExpired
+
+Wipes expired options from the database and burns NFTs.
+
+### writeOption
+
+Handles writing an option, including minting writer NFTs and uploading metadata to S3.
+
+## Frontend
+
+The frontend is built with Next.js and Tailwind CSS. It includes configuration files for ESLint, PostCSS, and Tailwind.
