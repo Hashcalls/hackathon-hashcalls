@@ -33,7 +33,7 @@ export const handler = async (event) => {
   try {
     const body = JSON.parse(event.body);
 
-    if (!body.writerAccountId || !body.tokenId || !body.amount || !body.strikePrice || !body.isCall || !body.premium || !body.expiry) {
+    if (!body.writerAccountId || !body.tokenId || !body.amount || !body.strikePrice || typeof body.isCall === 'undefined' || !body.premium || !body.expiry) {
       throw new Error("Missing required parameters.");
     }
 
