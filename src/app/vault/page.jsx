@@ -146,7 +146,7 @@ export default function VaultPage() {
   }
 
   if (isSuccess) {
-    return <SuccessPage message="You have exercised an option!" />;
+    return <SuccessPage message="You have exercised an option!" onBack={() => setIsSuccess(false)} />;
   }
 
   return (
@@ -159,7 +159,7 @@ export default function VaultPage() {
       >
         Your Vault
       </motion.h1>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="flex flex-col w-1/2 justify-center mx-auto gap-8">
         <motion.div
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
@@ -199,10 +199,6 @@ export default function VaultPage() {
                         <div>
                           <p className="font-semibold">Expiry Date:</p>
                           <p>{option.expiryDate}</p>
-                        </div>
-                        <div>
-                          <p className="font-lighter text-xs">serials:</p>
-                          <p>BuyerNftSerial: {option.buyerNftSerial} WriterNftSerial: {option.PK}</p>
                         </div>
                       </div>
                       <Button

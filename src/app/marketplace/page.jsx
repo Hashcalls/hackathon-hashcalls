@@ -19,19 +19,20 @@ export default function Marketplace() {
   const [error, setError] = useState(null)
   const [isSuccess, setIsSuccess] = useState(false)
 
-  useEffect(() => {
-    async function fetchOptions() {
-      try {
-        setIsLoading(true)
-        const data = await getBuyableOptions()
-        setOptions(data.data)
-      } catch (err) {
-        console.error("Error fetching options:", err)
-        setError("Failed to load options. Please try again.")
-      } finally {
-        setIsLoading(false)
-      }
+  async function fetchOptions() {
+    try {
+      setIsLoading(true)
+      const data = await getBuyableOptions()
+      setOptions(data.data)
+    } catch (err) {
+      console.error("Error fetching options:", err)
+      setError("Failed to load options. Please try again.")
+    } finally {
+      setIsLoading(false)
     }
+  }
+
+  useEffect(() => {
     fetchOptions()
   }, [])
 
@@ -81,7 +82,7 @@ export default function Marketplace() {
   }
 
   if (isSuccess) {
-    return <SuccessPage message="You have bought an option!" />;
+    return <SuccessPage message="You have bought an option!" onBack={() => { setIsSuccess(false); fetchOptions(); }} />;
   }
 
   return (
@@ -90,7 +91,7 @@ export default function Marketplace() {
         <CardTitle className="text-2xl font-bold text-blue-400">Marketplace</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {options.map((option, index) => (
             <Card key={option.PK} className="bg-gray-700">
               <CardContent className="p-4 text-white">
@@ -119,6 +120,6 @@ export default function Marketplace() {
           ))}
         </div>
       </CardContent>
-    </Card>
+    </Card >
   )
 }
