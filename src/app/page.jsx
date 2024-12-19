@@ -31,8 +31,9 @@ export default function CreatePage() {
   const [premium, setPremium] = useState("");
   const [strike, setStrike] = useState("");
   const [expiry, setExpiry] = useState("");
-  const [optionType, setOptionType] = useState("call");
+  const [optionType, setOptionType] = useState("");
   const { accountId, walletData } = useContext(WalletContext);
+  const [finalData, setFinalData] = useState(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -88,6 +89,17 @@ export default function CreatePage() {
         provider
       );
 
+      const submittedData = {
+        token,
+        amount,
+        premium,
+        strike,
+        expiry,
+        optionType,
+      };
+
+      setFinalData(submittedData);
+
       // Clear input fields
       setToken("");
       setAmount("");
@@ -113,8 +125,13 @@ export default function CreatePage() {
     return <ErrorScreen message={error} />;
   }
 
-  if (isSuccess) {
-    return <SuccessPage message={`You have created an ${optionType} option for ${token} for ${amount} with strike price of ${strike} with a premium of ${premium} that expires on ${expiry}. View this NFT in your wallet.`} />;
+  if (isSuccess && finalData) {
+    return (
+      <SuccessPage
+        message={`You have created a ${finalData.optionType} option for ${finalData.token} for ${finalData.amount} with a strike of ${finalData.strike}, a premium of ${finalData.premium}, expiring on ${finalData.expiry}. View this NFT in your wallet.`}
+        onBack={() => setIsSuccess(false)}
+      />
+    );
   }
 
   return (
